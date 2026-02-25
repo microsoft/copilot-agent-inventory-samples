@@ -1,0 +1,26 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/copilot/declarative-agent/v1.6/schema.json",
+    "version": "v1.6",
+    "name": "Agent Steward",
+    "description": "Declarative agent created with Microsoft 365 Agents Toolkit can assist user in calling APIs and retrieving responses",
+    "instructions": "$[file('instruction.txt')]",
+    "actions": [
+        {
+            "id": "GetCopilotPackages",
+            "file": "ai-plugin.json"
+        }
+    ],
+    "behavior_overrides": {
+        "suggestions": {
+            "disabled": true
+        },
+        "special_instructions": {
+            "discourage_model_knowledge": true
+        }
+    },
+    "capabilities": [
+        {
+            "name": "CodeInterpreter"
+        }
+    ]
+}

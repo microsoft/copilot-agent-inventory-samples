@@ -1,0 +1,137 @@
+openapi: 3.0.4
+info:
+  title: OData Service for namespace microsoft.graph - Subset
+  description: This OData service is located at https://graph.microsoft.com/beta
+  version: beta
+  x-ms-generated-by:
+    toolName: Microsoft.OpenApi.OData
+    toolVersion: 1.0.9.0
+servers:
+  - url: https://graph.microsoft.com/beta
+paths:
+  /copilot/admin/catalog/packages:
+    get:
+      tags:
+        - copilot.copilotAdmin
+      summary: Get packages from copilot
+      description: Retrieve a list of copilot packages available in the catalog.
+      operationId: copilot.admin.catalog.GetPackages
+      parameters:
+        - name: $select
+          in: query
+          description: Select properties to be returned
+          style: form
+          explode: false
+          schema:
+            uniqueItems: true
+            type: array
+            items:
+              type: string
+        - name: $expand
+          in: query
+          description: Expand related entities
+          style: form
+          explode: false
+          schema:
+            uniqueItems: true
+            type: array
+            items:
+              type: string
+      responses:
+        2XX:
+          description: Retrieved navigation property
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/microsoft.graph.copilotPackageDetail'
+        4XX:
+          $ref: '#/components/responses/error'
+        5XX:
+          $ref: '#/components/responses/error'
+      x-ms-docs-operation-type: operation
+components:
+  schemas:
+    microsoft.graph.copilotPackageDetailCollectionResponse:
+      title: Collection of copilotPackageDetail
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/BaseCollectionPaginationCountResponse'
+        - type: object
+          properties:
+            value:
+              type: array
+              items:
+                $ref: '#/components/schemas/microsoft.graph.copilotPackageDetail'
+    microsoft.graph.copilotPackageDetail:
+      allOf:
+        - $ref: '#/components/schemas/microsoft.graph.copilotPackage'
+        - title: copilotPackageDetail
+          required:
+            - "@odata.type"
+          type: object
+          properties:
+            acquireUsersAndGroups:
+              type: array
+              items:
+                $ref: '#/components/schemas/microsoft.graph.packageAccessEntity'
+            allowedUsersAndGroups:
+              type: array
+              items:
+                $ref: '#/components/schemas/microsoft.graph.packageAccessEntity'
+            categories:
+              type: array
+              items:
+                type: string
+            elementDetails:
+              type: array
+              items:
+                $ref: '#/components/schemas/microsoft.graph.packageElementDetail'
+            longDescription:
+              type: string
+              nullable: true
+            manifestVersion:
+              type: string
+              nullable: true
+            sensitivity:
+              type: string
+              nullable: true
+            version:
+              type: string
+              nullable: true
+            '@odata.type':
+              type: string
+      x-ms-discriminator-value: '#microsoft.graph.copilotPackageDetail'
+    microsoft.graph.packageAccessEntity:
+      title: packageAccessEntity
+      required:
+        - '@odata.type'
+      type: object
+      properties:
+        resourceId:
+          type: string
+        resourceType:
+          $ref: '#/components/schemas/microsoft.graph.accessEntityType'
+        '@odata.type':
+          type: string
+    microsoft.graph.packageElementDetail:
+      title: packageElementDetail
+      required:
+        - '@odata.type'
+      type: object
+      properties:
+        elements:
+          type: array
+          items:
+            $ref: '#/components/schemas/microsoft.graph.packageElement'
+        elementType:
+          type: string
+          nullable: true
+        '@odata.type':
+          type: string
+    microsoft.graph.accessEntityType:
+      title: accessEntityType
+      enum:
+        - user
+        - group
+        - unknownFutureValue
+      type: string

@@ -1,0 +1,36 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.3/schema.json",
+    "schema_version": "v2.3",
+    "name_for_human": "Get Packages Graph API",
+    "description_for_human": "Test",
+    "description_for_model": "Test",
+    "contact_email": "publisher-email@example.com",
+    "namespace": "packagemanager",
+    "capabilities": {},
+    "functions": [
+        {
+            "name": "copilot_admin_catalog_GetPackages",
+            "description": "Retrieve a list of copilot packages available in the catalog."
+        },
+        {
+            "name": "copilot_admin_catalog_GetPackageById",
+            "description": "Retrieve detailed information about a specific copilot package using the id."
+        }
+    ],
+    "runtimes": [
+        {
+            "type": "OpenApi",
+           "auth": {
+                "type": "OAuthPluginVault",
+                "reference_id": ""
+            },
+            "spec": {
+                "url": "apiSpecificationFile/openapi.yaml"
+            },
+            "run_for_functions": [
+                "copilot_admin_catalog_GetPackages",
+                "copilot_admin_catalog_GetPackageById"
+            ]
+        }
+    ]
+}
