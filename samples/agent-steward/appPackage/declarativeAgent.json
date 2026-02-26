@@ -22,5 +22,23 @@
         {
             "name": "CodeInterpreter"
         }
+    ],
+    "conversation_starters": [
+        {
+            "title": "List all agents",
+            "text": "Show me all Agent Builder agents in my tenant."
+        },
+        {
+            "title": "Agent inventory by build type",
+            "text": "Show me all Custom Agents in my tenant."
+        },
+        {
+            "title": "Find overlapping agents",
+            "text": "Identify common themes and potential duplicates across all agents."
+        },
+        {
+            "title": "Consolidation candidates",
+            "text": "Which shared agents could be consolidated into org-wide agents?"
+        }
     ]
 }
