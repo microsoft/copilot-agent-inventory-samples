@@ -5,7 +5,7 @@
     "description_for_human": "Test",
     "description_for_model": "Test",
     "contact_email": "publisher-email@example.com",
-    "namespace": "packagemanager",
+    "namespace": "agentsteward",
     "capabilities": {},
     "functions": [
         {
@@ -19,10 +19,10 @@
     ],
     "runtimes": [
         {
-            "type": "OpenApi",
+           "type": "OpenApi",
            "auth": {
                 "type": "OAuthPluginVault",
-                "reference_id": ""
+                "reference_id": "${{OAUTH_PLUGIN_VAULT_REFERENCE_ID}}"
             },
             "spec": {
                 "url": "apiSpecificationFile/openapi.yaml"

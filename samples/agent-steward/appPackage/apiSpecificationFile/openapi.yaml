@@ -35,10 +35,15 @@ paths:
         - name: $filter
           in: query
           required: true
+          explode: true
+          description: One or more OData filter expressions. Always include the supportedHosts filter. Add the elementTypes filter when scoping to a specific agent type.
           schema:
-            type: string
-            enum:
-              - "supportedHosts/any(h:h eq 'Copilot')"
+            type: array
+            items:
+              type: string
+              enum:
+                - "supportedHosts/any(h:h eq 'Copilot')"
+                - "elementTypes/any(h:h eq 'DeclarativeCopilots')"
       responses:
         2XX:
           description: Retrieved navigation property
