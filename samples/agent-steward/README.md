@@ -77,11 +77,21 @@ SHAREPOINT_KNOWLEDGE_URL=https://<your-tenant>.sharepoint.com/sites/<your-site>/
 
 ### 3. Configure OAuth for the API plugin
 
-The API plugin calls the Microsoft Graph Copilot Admin Catalog API (`/beta/copilot/admin/catalog/packages`) using OAuth via the `OAuthPluginVault` auth type. You need to register an OAuth configuration in the Agents Toolkit and store the resulting reference ID in your local env file.
+The API plugin calls the Microsoft Graph Copilot Admin Catalog API (`/beta/copilot/admin/catalog/packages`) using OAuth via the `OAuthPluginVault` auth type. You need to register an OAuth configuration in the Teams Developer Portal and store the resulting registration ID in your local env file.
 
-1. Register an application in [Entra ID](https://entra.microsoft.com) with the required Graph API permissions for the Copilot Admin Catalog API.
-2. In VS Code, open the Microsoft 365 Agents Toolkit and use the **Register OAuth** flow to register your app credentials. This produces an `OAuthPluginVault` reference ID.
-3. Open [env/.env.dev.user](env/.env.dev.user) and set `OAUTH_PLUGIN_VAULT_REFERENCE_ID` to the value you obtained:
+1. Register an application in [Entra ID](https://entra.microsoft.com) with the required Graph API permissions (Delegated) for the Copilot Admin Catalog API - `CopilotPackages.Read.All`. Copy the **Client ID** as you will need this later.
+2. Generate a client secret for the app registration and copy the **Value**.
+3. Open the [Teams Developer Portal](https://dev.teams.microsoft.com) and go to **Tools** > **OAuth client registration**.
+4. Select **New OAuth client registration** and fill in the details:
+   - **Registration name** — a descriptive name (e.g. `Agent Steward`)
+   - **Base URL** — `https://graph.microsoft.com`
+   - **Client ID** — the Client ID copied in step 1
+   - **Client secret** — the secret value copied in step 2
+   - **Authorization endpoint** — `https://login.microsoftonline.com/common/oauth2/v2.0/authorize`
+   - **Token endpoint** — `https://login.microsoftonline.com/common/oauth2/v2.0/token`
+   - **Scopes** — `CopilotPackages.Read.All offline_access`
+5. Save the registration and copy the **OAuth registration ID** — this is your `OAuthPluginVault` reference ID.
+6. Open [env/.env.dev.user](env/.env.dev.user) and set `OAUTH_PLUGIN_VAULT_REFERENCE_ID` to the value you obtained:
 
 ```
 OAUTH_PLUGIN_VAULT_REFERENCE_ID=<your-reference-id>
