@@ -4,6 +4,8 @@
 
 **Agent Steward** is a declarative agent for Microsoft 365 Copilot that helps IT admins and governance teams discover, analyse, and govern the Copilot agents deployed in their tenant. It connects to the Microsoft Graph Copilot Admin Catalog API to retrieve live package data, and cross-references that data with an uploaded usage report to surface actionable insights — with a particular focus on identifying duplicate agents and finding opportunities to consolidate fragmented deployments into org-wide agents.
 
+![Agent Steward in Microsoft 365 Copilot](agent-steward-screenshot.png)
+
 ---
 
 ## What it does
