@@ -27,7 +27,7 @@ At the time of writing, the API supports delegated permissions only with applica
 
 | Sample | Platform | Description |
 | --- | --- | --- |
-| [Agent Steward](samples/agent-steward/) | Microsoft 365 Copilot Declarative Agent | A declarative agent built with M365 Agents Toolkit for IT admins to discover, analyse, and govern Copilot agents — with a focus on identifying duplicates and surfacing org-wide consolidation opportunities. |
+| [Agent Steward](samples/agent-steward/) | Microsoft 365 Copilot Declarative Agent | A declarative agent built with theM365 Agents Toolkit for IT admins to discover, analyse, and govern Copilot agents — with a focus on identifying duplicates and surfacing org-wide consolidation opportunities. |
 | [Attestation - COMING SOON](samples/attestation/) | Microsoft Power Platform | A Power Automate-based solution that retrieves agent inventory from the API, stores it in SharePoint or Dataverse, and drives attestation and lifecycle management workflows. | **Sample coming soon**
 
 ---
