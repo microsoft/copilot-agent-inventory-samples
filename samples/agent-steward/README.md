@@ -1,6 +1,6 @@
 # Agent Steward
 
-> **This is a sample.** Agent Steward is designed to showcase the art of the possible with the [Microsoft Graph Copilot Admin Catalog API](https://learn.microsoft.com/graph/api/resources/copilot-overview). It is intended as a starting point and reference implementation, not a production-ready governance tool.
+> **This is a sample.** Agent Steward is designed to showcase the art of the possible with the [Microsoft Graph Package Management (Inventory API)](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/api/admin-settings/package/resources/copilotpackagedetail). It is intended as a starting point and reference implementation, not a production-ready governance tool.
 
 **Agent Steward** is a declarative agent for Microsoft 365 Copilot that helps IT admins and governance teams discover, analyse, and govern the Copilot agents deployed in their tenant. It connects to the Microsoft Graph Copilot Admin Catalog API to retrieve live package data, and cross-references that data with an uploaded usage report to surface actionable insights — with a particular focus on identifying duplicate agents and finding opportunities to consolidate fragmented deployments into org-wide agents.
 
@@ -37,8 +37,8 @@
 
 - [Microsoft 365 Agents Toolkit VS Code Extension](https://aka.ms/teams-toolkit) version 5.0.0 or higher
 - A Microsoft 365 tenant with [Microsoft 365 Copilot licences](https://learn.microsoft.com/microsoft-365-copilot/extensibility/prerequisites#prerequisites)
-- An Entra ID app registration configured for delegated authentication against the Microsoft Graph Copilot Admin Catalog API
-- Users of the agent must hold the **Global Administrator** or **AI Administrator** role — the Copilot Admin Catalog API only supports delegated authentication at the time of writing, so calls are made as the signed-in user and require admin privileges
+- An Entra ID app registration configured for delegated authentication against the Microsoft Graph Package Management API
+- Users of the agent must hold the **Global Administrator** or **AI Administrator** role — the Package Management API only supports delegated authentication at the time of writing, so calls are made as the signed-in user and require admin privileges (**Application permissions are planned**)
 - A SharePoint document library to host the agent usage report *(optional — see step 2)*
 
 ---
@@ -48,7 +48,7 @@
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/alexc-MSFT/copilot-agent-inventory-samples.git
+git clone https://github.com/microsoft/copilot-agent-inventory-samples.git
 cd copilot-agent-inventory-samples/samples/agent-steward
 ```
 
@@ -63,12 +63,11 @@ The agent can cross-reference the tenant catalog with a Copilot agent usage repo
 There is currently no API for Copilot agent usage data. The report must be downloaded manually:
 
 1. Sign in to the [Microsoft 365 admin centre](https://admin.microsoft.com).
-2. Go to **Reports** > **Usage** > **Copilot** and export the agent usage report.
-3. Upload the exported file to a SharePoint document library that the users of the agent have access to.
+2. Go to **Reports** > **Usage** > **Microsoft 365 Copilot** > **Agents** and export the agent usage report.
 
 #### Configuring the knowledge source
 
-1. Create (or identify) a SharePoint site and document library for the report.
+1. Create (or identify) a SharePoint site and document library for the report that users of the agent will have access to.
 2. Open [env/.env.dev.user](env/.env.dev.user) and set `SHAREPOINT_KNOWLEDGE_URL` to the URL of that library:
 
 ```
@@ -79,9 +78,9 @@ SHAREPOINT_KNOWLEDGE_URL=https://<your-tenant>.sharepoint.com/sites/<your-site>/
 
 ### 3. Configure OAuth for the API plugin
 
-The API plugin calls the Microsoft Graph Copilot Admin Catalog API (`/beta/copilot/admin/catalog/packages`) using OAuth via the `OAuthPluginVault` auth type. You need to register an OAuth configuration in the Teams Developer Portal and store the resulting registration ID in your local env file.
+The API plugin calls the Microsoft Graph Package Management API, specifically the Get and List methods (`/beta/copilot/admin/catalog/packages`) using OAuth via the `OAuthPluginVault` auth type. You need to register an OAuth configuration in the Teams Developer Portal and store the resulting registration ID in your local env file.
 
-1. Register an application in [Entra ID](https://entra.microsoft.com) with the required Graph API permissions (Delegated) for the Copilot Admin Catalog API - `CopilotPackages.Read.All`. Copy the **Client ID** as you will need this later.
+1. Register an application in [Entra ID](https://entra.microsoft.com) with the required Graph API permissions (Delegated) for the Package Management API - `CopilotPackages.Read.All`. Copy the **Client ID** as you will need this later.
 2. Generate a client secret for the app registration and copy the **Value**.
 3. Open the [Teams Developer Portal](https://dev.teams.microsoft.com) and go to **Tools** > **OAuth client registration**.
 4. Select **New OAuth client registration** and fill in the details:
@@ -108,20 +107,7 @@ OAUTH_PLUGIN_VAULT_REFERENCE_ID=<your-reference-id>
 3. Sign in with your Microsoft 365 account in the **Accounts** section.
 4. Select **Provision** to register the app in your tenant.
 5. Once provisioned, open [Microsoft 365 Copilot](https://m365.cloud.microsoft/chat) and find **Agent Steward** in the agent list.
-
----
-
-## Project structure
-
-| Folder / File | Contents |
-| --- | --- |
-| `appPackage/` | App manifest, declarative agent definition, API plugin manifest, and OpenAPI specification |
-| `appPackage/apiSpecificationFile/openapi.yaml` | OpenAPI spec for the Microsoft Graph Copilot Admin Catalog API endpoints used by the agent |
-| `appPackage/declarativeAgent.json` | Declarative agent definition — capabilities, instructions, conversation starters |
-| `appPackage/ai-plugin.json` | API plugin manifest — function definitions and OAuth configuration |
-| `appPackage/instruction.txt` | System instructions that govern agent behaviour |
-| `env/` | Environment variable files for dev and local configurations |
-| `m365agents.yml` | Microsoft 365 Agents Toolkit project file |
+6. To deploy for multiple users, you will need to locate the appPackage zip file and share this with others to sideload or deploy into the MAC.
 
 ---
 
@@ -136,7 +122,7 @@ OAUTH_PLUGIN_VAULT_REFERENCE_ID=<your-reference-id>
 ## References
 
 - [Declarative agents for Microsoft 365](https://aka.ms/teams-toolkit-declarative-agent)
-- [Microsoft Graph Copilot Admin Catalog API](https://learn.microsoft.com/graph/api/resources/copilot-overview)
+- [Microsoft Graph Package Management API](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/api/admin-settings/package/overview)
 - [Extend Microsoft 365 Copilot with API plugins](https://learn.microsoft.com/microsoft-365-copilot/extensibility/overview-api-plugin)
 - [Microsoft 365 Agents Toolkit documentation](https://learn.microsoft.com/microsoftteams/platform/toolkit/teams-toolkit-fundamentals)
 - [Microsoft 365 Copilot extensibility samples](https://learn.microsoft.com/microsoft-365-copilot/extensibility/samples)

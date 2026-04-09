@@ -1,1 +1,2 @@
 samples/agent-steward/env/.env.dev
+samples/agent-steward/.claude/settings.local.json
