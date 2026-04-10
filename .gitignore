@@ -1,0 +1,3 @@
+samples/agent-steward/env/.env.dev
+samples/agent-steward/.claude/settings.local.json
+samples/agent-steward/env/.env.dev.user

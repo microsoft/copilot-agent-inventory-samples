@@ -1,0 +1,60 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/copilot/declarative-agent/v1.6/schema.json",
+    "version": "v1.6",
+    "name": "Agent Steward",
+    "description": "Agent to help manage and govern your Copilot agents.",
+    "instructions": "$[file('instruction.txt')]",
+    "actions": [
+        {
+            "id": "GetCopilotPackages",
+            "file": "ai-plugin.json"
+        }
+    ],
+    "behavior_overrides": {
+        "suggestions": {
+            "disabled": true
+        },
+        "special_instructions": {
+            "discourage_model_knowledge": true
+        }
+    },
+    "capabilities": [
+        {
+            "name": "CodeInterpreter"
+        },
+        {
+            "name": "OneDriveAndSharePoint",
+            "items_by_url": [
+                {
+                     "url": "${{SHAREPOINT_KNOWLEDGE_URL}}"
+                }
+            ]
+        }
+    ],
+    "conversation_starters": [
+        {
+            "title": "🗂️ Top Agent builder agents",
+            "text": "Show me the top 20 agent builder agents in my tenant."
+        },
+        {
+            "title": "🔍 Find overlapping agents",
+            "text": "Identify common themes and potential duplicates across all agents."
+        },
+        {
+            "title": "⚠️ Active duplicates",
+            "text": "Which agents are active duplicates — serving the same purpose with users split between them?"
+        },
+        {
+            "title": "🔀 Consolidation candidates",
+            "text": "Which shared agents could be consolidated into a single org-wide agent?"
+        },
+        {
+            "title": "🌐 Org-wide candidates",
+            "text": "Which agents have broad adoption and are strong candidates for org-wide promotion?"
+        },
+        {
+            "title": "💤 Unused agents",
+            "text": "Are there any agents that exist in the catalog but have had no usage?"
+        }
+    ]
+}
