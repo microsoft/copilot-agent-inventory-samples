@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#00bcf2"/>
+      <stop offset="35%"  stop-color="#2563eb"/>
+      <stop offset="70%"  stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#c026d3"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect width="32" height="32" rx="7" fill="url(#g)"/>
+  <!-- White shield -->
+  <path d="M16 6 L8 10 L8 16 C8 21.5 11.6 26.3 16 27.8 C20.4 26.3 24 21.5 24 16 L24 10 Z" fill="white" opacity="0.95"/>
+  <!-- Inner shield highlight for depth -->
+  <path d="M16 9.5 L11 12.5 L11 16.5 C11 20.2 13.2 23.5 16 24.8 C18.8 23.5 21 20.2 21 16.5 L21 12.5 Z" fill="url(#g)" opacity="0.5"/>
+</svg>
