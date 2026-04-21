@@ -27,8 +27,8 @@ At the time of writing, the API supports delegated permissions only with applica
 
 | Sample | Platform | Description |
 | --- | --- | --- |
-| [Agent Steward](samples/agent-steward/) | Microsoft 365 Copilot Declarative Agent | A declarative agent built with the M365 Agents Toolkit for IT admins to discover, analyse, and govern Copilot agents — with a focus on identifying duplicates and surfacing org-wide consolidation opportunities. |
-| [Catalog Connector](samples/catalog-connector/) | Microsoft Power Platform | A Power Platform Custom Connector for the Package Management API. Import the included swagger file to use the connector in Power Automate flows, Power Apps, and Logic Apps to list, filter, and retrieve Copilot agent metadata from your tenant. |
+| [Agent Steward](samples/agent-steward/) | Microsoft 365 Copilot Declarative Agent | A declarative agent built with the M365 Agents Toolkit for IT admins to discover, analyse, and govern Copilot agents — with a focus on identifying duplicates, analysing usage and surfacing org-wide consolidation opportunities. |
+| [Catalog Connector](samples/catalog-connector/) | Microsoft Power Platform | A Power Platform custom connector for the Microsoft Graph Package Management API. Import the included swagger file to use the connector in Power Automate flows, Power Apps, and Logic Apps to list, filter, and retrieve Copilot agent metadata from your tenant. |
 | [Attestation — COMING SOON](samples/attestation/) | Microsoft Power Platform | A Power Automate-based solution that retrieves agent inventory from the API, stores it in SharePoint or Dataverse, and drives attestation and lifecycle management workflows. |
 
 ---

@@ -21,6 +21,10 @@
 - **Identify org-wide candidates** — Surface agents with broad adoption or clusters of similar agents with high combined usage that could be consolidated and promoted as a single org-wide agent.
 - **Recommend consolidation** — Provide clear, actionable recommendations: which agents to retire, which to consolidate, and which to promote org-wide.
 
+## Recommended model
+
+> **Use Think Deeper (or an equivalent deep reasoning mode) when interacting with Agent Steward.** Analysis tasks — such as identifying duplicates, grouping agents by theme, and recommending consolidation — require multi-step reasoning across large datasets. We have observed incomplete or inaccurate results when using Auto or Quick response modes. Select **Think Deeper** from the model picker in Microsoft 365 Copilot before submitting these queries.
+
 ## Sample prompts
 
 - 🗂️ *Show the top 20 agent builder agents in my teannt.*
@@ -67,12 +71,13 @@ The agent can cross-reference the tenant catalog with a Copilot agent usage repo
 There is currently no API for Copilot agent usage data. The report must be downloaded manually:
 
 1. Sign in to the [Microsoft 365 admin centre](https://admin.microsoft.com).
-2. Go to **Reports** > **Usage** > **Microsoft 365 Copilot** > **Agents** and export the agent usage report.
+2. Go to **Reports** > **Usage** > **Microsoft 365 Copilot** > **Agents** and export the agent usage report as a CSV file.
 
 #### Configuring the knowledge source
 
 1. Create (or identify) a SharePoint site and document library for the report that users of the agent will have access to.
-2. Open **env/env.dev.user** and set `SHAREPOINT_KNOWLEDGE_URL` to the URL of that library:
+2. **Upload the downloaded CSV file to that document library.** The agent identifies the usage report by its column structure, so the filename can be anything.
+3. Open **env/env.dev.user** and set `SHAREPOINT_KNOWLEDGE_URL` to the URL of that library:
 
 ```
 SHAREPOINT_KNOWLEDGE_URL=https://<your-tenant>.sharepoint.com/sites/<your-site>/Shared%20Documents
