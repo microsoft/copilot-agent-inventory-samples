@@ -1,0 +1,315 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Copilot Agent Catalog",
+    "description": "Power Platform custom connector for the Microsoft Graph Copilot Admin Catalog API. Enables Power Automate flows, Power Apps, and other Power Platform solutions to list, filter, and retrieve metadata for all Copilot agents deployed in your Microsoft 365 tenant. Requires the CopilotPackages.Read.All delegated permission and enrolment in the Microsoft 365 Frontier program.",
+    "version": "1.0"
+  },
+  "host": "graph.microsoft.com",
+  "basePath": "/",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/beta/copilot/admin/catalog/packages": {
+      "get": {
+        "summary": "Get Copilot Packages",
+        "description": "Retrieves a list of all packages available in the tenant.",
+        "operationId": "GetPackages",
+        "parameters": [
+          {
+            "name": "$filter",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "Optional OData $filter query."
+          },
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "default": "application/json",
+            "description": "Response media type."
+          },
+          {
+            "name": "$top",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "description": "Optional page size."
+          },
+          {
+            "name": "$skiptoken",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "Paging token returned via @odata.nextLink."
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "default",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "@odata.count": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "@odata.count"
+                },
+                "@odata.nextLink": {
+                  "type": "string",
+                  "description": "URL to the next page of results (if present)."
+                },
+                "value": {
+                  "type": "array",
+                  "description": "value",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "id"
+                      },
+                      "displayName": {
+                        "type": "string",
+                        "description": "displayName"
+                      },
+                      "type": {
+                        "type": "string",
+                        "description": "type"
+                      },
+                      "shortDescription": {
+                        "type": "string",
+                        "description": "shortDescription"
+                      },
+                      "isBlocked": {
+                        "type": "boolean",
+                        "description": "isBlocked"
+                      },
+                      "supportedHosts": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "supportedHosts"
+                      },
+                      "lastModifiedDateTime": {
+                        "type": "string",
+                        "description": "lastModifiedDateTime"
+                      },
+                      "publisher": {
+                        "type": "string",
+                        "description": "publisher"
+                      },
+                      "availableTo": {
+                        "type": "string",
+                        "description": "availableTo"
+                      },
+                      "deployedTo": {
+                        "type": "string",
+                        "description": "deployedTo"
+                      },
+                      "elementTypes": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "elementTypes"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/beta/copilot/admin/catalog/packages/{packageId}": {
+      "get": {
+        "summary": "Get Package Detail",
+        "description": "Retrieves detailed information for a specific agent or app by ID.",
+        "operationId": "GetPackageDetail",
+        "parameters": [
+          {
+            "name": "packageId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The id of the Copilot package to retrieve."
+          },
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "default": "application/json",
+            "description": "Response media type."
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "default",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "longDescription": {
+                  "type": "string",
+                  "description": "longDescription"
+                },
+                "categories": {
+                  "type": "array",
+                  "description": "categories",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "id": {
+                  "type": "string",
+                  "description": "id"
+                },
+                "displayName": {
+                  "type": "string",
+                  "description": "displayName"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "type"
+                },
+                "shortDescription": {
+                  "type": "string",
+                  "description": "shortDescription"
+                },
+                "isBlocked": {
+                  "type": "boolean",
+                  "description": "isBlocked"
+                },
+                "supportedHosts": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "supportedHosts"
+                },
+                "lastModifiedDateTime": {
+                  "type": "string",
+                  "description": "lastModifiedDateTime"
+                },
+                "publisher": {
+                  "type": "string",
+                  "description": "publisher"
+                },
+                "availableTo": {
+                  "type": "string",
+                  "description": "availableTo"
+                },
+                "deployedTo": {
+                  "type": "string",
+                  "description": "deployedTo"
+                },
+                "elementTypes": {
+                  "type": "array",
+                  "description": "elementTypes",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "version": {
+                  "type": "string",
+                  "description": "version"
+                },
+                "manifestVersion": {
+                  "type": "string",
+                  "description": "manifestVersion"
+                },
+                "allowedUsersAndGroups": {
+                  "type": "array",
+                  "description": "allowedUsersAndGroups",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "resourceId": {
+                        "type": "string"
+                      },
+                      "resourceType": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "acquireUsersAndGroups": {
+                  "type": "array",
+                  "description": "acquireUsersAndGroups",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "resourceId": {
+                        "type": "string"
+                      },
+                      "resourceType": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "elementDetails": {
+                  "type": "array",
+                  "description": "elementDetails",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "elementType": {
+                        "type": "string",
+                        "description": "elementType"
+                      },
+                      "elements": {
+                        "type": "array",
+                        "description": "elements",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "id"
+                            },
+                            "definition": {
+                              "type": "string",
+                              "description": "JSON definition returned as a string (stringified JSON). Parse in Flow using json(<definition>).\n"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "oauth2-auth": []
+    }
+  ],
+  "securityDefinitions": {
+    "oauth2-auth": {
+      "type": "oauth2",
+      "flow": "accessCode",
+      "tokenUrl": "https://login.windows.net/common/oauth2/authorize",
+      "scopes": {},
+      "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/authorize"
+    }
+  }
+}
