@@ -87,21 +87,25 @@ SHAREPOINT_KNOWLEDGE_URL=https://<your-tenant>.sharepoint.com/sites/<your-site>/
 
 ### 3. Configure OAuth for the API plugin
 
-The API plugin calls the Microsoft Graph Package Management API, specifically the Get and List methods (`/beta/copilot/admin/catalog/packages`) using OAuth via the `OAuthPluginVault` auth type. You need to register an OAuth configuration in the Teams Developer Portal and store the resulting registration ID in your local env file.
+The API plugin calls the Microsoft Graph Package Management API, specifically the Get and List methods (`/beta/copilot/admin/catalog/packages`) using OAuth via the `OAuthPluginVault` auth type. You need to register an OAuth configuration in the Teams Developer Portal and store the resulting registration ID in your local env file. Make sure to replace `<your-tenant-id>` below with the ID of your tenant.
 
 1. Register an application in [Entra ID](https://entra.microsoft.com) with the required Graph API permissions (Delegated) for the Package Management API - `CopilotPackages.Read.All`. Copy the **Client ID** as you will need this later.
-2. Generate a client secret for the app registration and copy the **Value**.
-3. Open the [Teams Developer Portal](https://dev.teams.microsoft.com) and go to **Tools** > **OAuth client registration**.
-4. Select **New OAuth client registration** and fill in the details:
+2. In the same app registration, go to **Authentication** > **Add a platform** > **Web** and add the following redirect URI: `https://teams.microsoft.com/api/platform/v1.0/oAuthRedirect`
+3. Generate a client secret for the app registration and copy the **Value**.
+4. Open the [Teams Developer Portal](https://dev.teams.microsoft.com) and go to **Tools** > **OAuth client registration**.
+5. Select **New OAuth client registration** and fill in the details:
    - **Registration name** — a descriptive name (e.g. `Agent Steward`)
    - **Base URL** — `https://graph.microsoft.com`
    - **Client ID** — the Client ID copied in step 1
-   - **Client secret** — the secret value copied in step 2
-   - **Authorization endpoint** — `https://login.microsoftonline.com/common/oauth2/v2.0/authorize`
-   - **Token endpoint** — `https://login.microsoftonline.com/common/oauth2/v2.0/token`
+   - **Client secret** — the secret value copied in step 3
+   - **Authorization endpoint** — `https://login.microsoftonline.com/<your-tenant-id>/oauth2/v2.0/authorize`
+   - **Token endpoint** — `https://login.microsoftonline.com/<your-tenant-id>/oauth2/v2.0/token`
+   - **Refresh endpoint** — `https://login.microsoftonline.com/<your-tenant-id>/oauth2/v2.0/refresh`
    - **Scopes** — `CopilotPackages.Read.All offline_access`
-5. Save the registration and copy the **OAuth registration ID** — this is your `OAuthPluginVault` reference ID.
-6. Open **env/env.dev.user** and set `OAUTH_PLUGIN_VAULT_REFERENCE_ID` to the value you obtained:
+
+   > Replace `<your-tenant-id>` with your Entra ID tenant ID (a GUID found in the **Overview** blade of the [Entra admin centre](https://entra.microsoft.com)). Using the tenant-specific endpoints rather than `/common` is required for the Teams OAuth flow to resolve correctly.
+6. Save the registration and copy the **OAuth registration ID** — this is your `OAuthPluginVault` reference ID.
+7. Open **env/env.dev.user** and set `OAUTH_PLUGIN_VAULT_REFERENCE_ID` to the value you obtained:
 
 ```
 OAUTH_PLUGIN_VAULT_REFERENCE_ID=<your-reference-id>
