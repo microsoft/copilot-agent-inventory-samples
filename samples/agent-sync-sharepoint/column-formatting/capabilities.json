@@ -1,0 +1,110 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/sp/v2/column-formatting.schema.json",
+  "elmType": "div",
+  "style": {
+    "display": "flex",
+    "flex-wrap": "wrap",
+    "gap": "6px"
+  },
+  "children": [
+    {
+      "elmType": "div",
+      "style": {
+        "display": "=if(@currentField == '', 'block', 'none')",
+        "color": "#666"
+      },
+      "txtContent": "—"
+    },
+    {
+      "elmType": "span",
+      "style": {
+        "display": "=if(@currentField != '' && indexOf(@currentField, 'OneDriveAndSharePoint') > -1, 'inline-block', 'none')",
+        "padding": "2px 8px",
+        "border-radius": "999px",
+        "background-color": "#e5f1fb",
+        "color": "#004578",
+        "font-weight": "600",
+        "font-size": "12px"
+      },
+      "txtContent": "OneDriveAndSharePoint"
+    },
+    {
+      "elmType": "span",
+      "style": {
+        "display": "=if(@currentField != '' && indexOf(@currentField, 'GraphConnectors') > -1, 'inline-block', 'none')",
+        "padding": "2px 8px",
+        "border-radius": "999px",
+        "background-color": "#e8f5e9",
+        "color": "#107c10",
+        "font-weight": "600",
+        "font-size": "12px"
+      },
+      "txtContent": "GraphConnectors"
+    },
+    {
+      "elmType": "span",
+      "style": {
+        "display": "=if(@currentField != '' && indexOf(@currentField, 'CodeInterpreter') > -1, 'inline-block', 'none')",
+        "padding": "2px 8px",
+        "border-radius": "999px",
+        "background-color": "#fff4ce",
+        "color": "#8a6d00",
+        "font-weight": "600",
+        "font-size": "12px"
+      },
+      "txtContent": "CodeInterpreter"
+    },
+    {
+      "elmType": "span",
+      "style": {
+        "display": "=if(@currentField != '' && indexOf(@currentField, 'WebSearch') > -1, 'inline-block', 'none')",
+        "padding": "2px 8px",
+        "border-radius": "999px",
+        "background-color": "#f3e8ff",
+        "color": "#5c2d91",
+        "font-weight": "600",
+        "font-size": "12px"
+      },
+      "txtContent": "WebSearch"
+    },
+    {
+      "elmType": "span",
+      "style": {
+        "display": "=if(@currentField != '' && indexOf(@currentField, 'TeamsMessages') > -1, 'inline-block', 'none')",
+        "padding": "2px 8px",
+        "border-radius": "999px",
+        "background-color": "#e8eaf6",
+        "color": "#3949ab",
+        "font-weight": "600",
+        "font-size": "12px"
+      },
+      "txtContent": "TeamsMessages"
+    },
+    {
+      "elmType": "span",
+      "style": {
+        "display": "=if(@currentField != '' && indexOf(@currentField, 'Email') > -1, 'inline-block', 'none')",
+        "padding": "2px 8px",
+        "border-radius": "999px",
+        "background-color": "#fce4ec",
+        "color": "#b71c1c",
+        "font-weight": "600",
+        "font-size": "12px"
+      },
+      "txtContent": "Email"
+    },
+    {
+      "elmType": "span",
+      "style": {
+        "display": "=if(@currentField != '' && indexOf(@currentField, 'GraphicArt') > -1, 'inline-block', 'none')",
+        "padding": "2px 8px",
+        "border-radius": "999px",
+        "background-color": "#ffe8d6",
+        "color": "#c43e00",
+        "font-weight": "600",
+        "font-size": "12px"
+      },
+      "txtContent": "GraphicArt"
+    }
+  ]
+}

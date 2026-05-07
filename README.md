@@ -2,7 +2,7 @@
 
 A collection of sample solutions that demonstrate what is possible with the **Microsoft Graph Package Management (Inventory) API** — a Microsoft Graph API that gives tenant admins programmatic access to manage Copilot agents deployed in their tenant.
 
-**Please note - Access to the Package Management API requires enrollment in the Frontier program at the time of writing.**
+**Please note - Access to the Package Management API requires a Microsoft Agent 365 license.**
 
 Each sample targets a different platform or persona and is designed as a **reference implementation and starting point**, not a production-ready solution.
 
@@ -29,6 +29,7 @@ At the time of writing, the API supports delegated permissions only with applica
 | --- | --- | --- |
 | [Agent Steward](samples/agent-steward/) | Microsoft 365 Copilot Declarative Agent | A declarative agent built with the M365 Agents Toolkit for IT admins to discover, analyse, and govern Copilot agents — with a focus on identifying duplicates, analysing usage and surfacing org-wide consolidation opportunities. |
 | [Catalog Connector](samples/catalog-connector/) | Microsoft Power Platform | A Power Platform custom connector for the Microsoft Graph Package Management API. Import the included swagger file to use the connector in Power Automate flows, Power Apps, and Logic Apps to list, filter, and retrieve Copilot agent metadata from your tenant. |
+| [Agent Sync SharePoint](samples/agent-sync-sharepoint/) | Microsoft Power Platform | A Power Automate flow (delivered as an unmanaged solution) that syncs your tenant's Copilot agent inventory to a SharePoint list, giving admins a familiar, filterable view of all agents. Requires the [Catalog Connector](samples/catalog-connector/) sample to be deployed first. |
 | [Attestation — COMING SOON](samples/attestation/) | Microsoft Power Platform | A Power Automate-based solution that retrieves agent inventory from the API, stores it in SharePoint or Dataverse, and drives attestation and lifecycle management workflows. |
 
 ---
