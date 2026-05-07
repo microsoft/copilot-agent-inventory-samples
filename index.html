@@ -973,7 +973,7 @@
       <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
       </svg>
-      API access requires enrollment in the Microsoft 365 Frontier program
+      Package Management API access requires a Microsoft Agent 365 license
     </div>
 
     <div class="hero-ctas">
@@ -1174,6 +1174,64 @@
       </div>
     </article>
 
+    <!-- AGENT SYNC SHAREPOINT -->
+    <article class="sample-card">
+      <div class="card-top-bar"></div>
+      <div class="sample-card-inner">
+        <div class="sample-header">
+          <div class="sample-icon-wrap">📋</div>
+          <div class="sample-title-block">
+            <div class="sample-badges">
+              <span class="badge badge-available">
+                <svg class="icon" width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/></svg>
+                Available
+              </span>
+              <span class="badge badge-platform">Power Platform</span>
+              <span class="badge badge-platform" style="background:rgba(20,184,166,.08);color:#0f766e;border-color:rgba(20,184,166,.18);">Power Automate</span>
+            </div>
+            <div class="sample-title">Agent Sync SharePoint</div>
+          </div>
+        </div>
+
+        <p class="sample-desc">
+          A Power Automate flow (delivered as an unmanaged solution) that syncs your tenant's Copilot agent inventory to a SharePoint list — giving IT admins a familiar, filterable, and shareable view of all agents without writing code.
+        </p>
+
+        <div class="feature-list">
+          <div class="feature-label">What it does</div>
+          <div class="feature-items">
+            <div class="feature-item">
+              <div class="feature-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+              Syncs all Copilot agents from the Graph API into a SharePoint list
+            </div>
+            <div class="feature-item">
+              <div class="feature-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+              Includes the custom connector pre-packaged in the solution
+            </div>
+            <div class="feature-item">
+              <div class="feature-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+              Uses environment variables for easy configuration of target site and list
+            </div>
+            <div class="feature-item">
+              <div class="feature-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+              Column formatting included for rich visual display of capabilities and connectors
+            </div>
+          </div>
+        </div>
+
+        <div class="sample-footer">
+          <div class="sample-tech">
+            <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Power Automate · SharePoint
+          </div>
+          <a href="https://github.com/microsoft/copilot-agent-inventory-samples/tree/main/samples/agent-sync-sharepoint" target="_blank" rel="noopener" class="sample-cta">
+            View sample
+            <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
+      </div>
+    </article>
+
     <!-- ATTESTATION -->
     <article class="sample-card soon">
       <div class="card-top-bar"></div>
@@ -1329,6 +1387,9 @@
             </a>
             <a href="https://github.com/microsoft/copilot-agent-inventory-samples/tree/main/samples/catalog-connector" target="_blank" rel="noopener" class="footer-col-link">
               <span>🔌</span> Catalog Connector
+            </a>
+            <a href="https://github.com/microsoft/copilot-agent-inventory-samples/tree/main/samples/agent-sync-sharepoint" target="_blank" rel="noopener" class="footer-col-link">
+              <span>📋</span> Agent Sync SharePoint
             </a>
             <a href="https://github.com/microsoft/copilot-agent-inventory-samples/tree/main/samples/attestation" target="_blank" rel="noopener" class="footer-col-link">
               <span>📋</span> Copilot Agent Inventory
