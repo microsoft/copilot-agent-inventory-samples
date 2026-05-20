@@ -124,6 +124,38 @@
                           "type": "string"
                         },
                         "description": "elementTypes"
+                      },
+                      "platform": {
+                        "type": "string",
+                        "description": "platform"
+                      },
+                      "appId": {
+                        "type": "string",
+                        "description": "appId"
+                      },
+                      "assetId": {
+                        "type": "string",
+                        "description": "assetId"
+                      },
+                      "version": {
+                        "type": "string",
+                        "description": "version"
+                      },
+                      "manifestVersion": {
+                        "type": "string",
+                        "description": "manifestVersion"
+                      },
+                      "ownerId": {
+                        "type": "string",
+                        "description": "ownerId"
+                      },
+                      "manifestId": {
+                        "type": "string",
+                        "description": "manifestId"
+                      },
+                      "longDescription": {
+                        "type": "string",
+                        "description": "longDescription"
                       }
                     }
                   }
