@@ -14,7 +14,6 @@ This is an unmanaged Power Platform solution containing:
 | Component | Description |
 | --- | --- |
 | **Power Automate flow** | A manually-triggered instant cloud flow that calls the Package Management API and creates an item in a SharePoint list for each Copilot agent. |
-| **Custom connector** | The same [Copilot Agent Catalog](../catalog-connector/) custom connector — included in the solution for convenience. After import, you will need to configure it with your Entra ID app registration credentials and create a connection. |
 
 Once imported and configured, triggering the flow populates your SharePoint list with the current agent inventory, ready for filtering, reporting, or feeding into downstream governance processes.
 
@@ -24,9 +23,12 @@ Once imported and configured, triggering the flow populates your SharePoint list
 
 - A Microsoft 365 tenant with [Microsoft 365 Copilot licences](https://learn.microsoft.com/microsoft-365-copilot/extensibility/prerequisites#prerequisites)
 - Access to the Package Management API — requires an Agent 365 license.
-- An **Entra ID app registration** configured with the `CopilotPackages.Read.All` delegated permission (see the [Catalog Connector setup guide](../catalog-connector/README.md#1-create-an-entra-id-app-registration) for instructions).
+- An **Entra ID app registration** configured for Microsoft Graph access with application permission:
+  - `CopilotPackages.Read.All`
+- Tenant-wide admin consent is required for this application permission. Least-privileged roles that can grant Microsoft Graph application-permission consent are **Privileged Role Administrator** and **Global Administrator**.
 - A **Power Platform environment** with permissions to import solutions (Environment Maker role or higher).
-- The user account running the flow must hold the **Global Administrator** or **AI Administrator** role.
+- **Power Apps premium license** for the user account that creates and runs the flow, as this solution uses the HTTP with Microsoft Entra ID connector which requires premium licensing.
+- The identity used by the **Inventory Sync Microsoft Entra ID HTTP Connection** (the preauthorized connector connection) must have delegated `Directory.Read.All` to resolve `sharedWithUsersAndGroups` via `directoryObjects/getByIds`. You can use a dedicated service account for this connection.
 - A **SharePoint site** where you have permission to create lists.
 
 ---
@@ -35,7 +37,17 @@ Once imported and configured, triggering the flow populates your SharePoint list
 
 ### 1. Create an Entra ID app registration
 
-If you haven't already, create an app registration by following the instructions in the [Catalog Connector deployment guide](../catalog-connector/README.md#1-create-an-entra-id-app-registration). You will need the **Client ID**, **Client secret**, and **Tenant ID** for step 4.
+If you do not already have one, create an app registration that will be used by the flow's Microsoft Graph HTTP actions:
+
+1. In **Microsoft Entra admin center** > **App registrations**, create a new app registration.
+2. In **API permissions**, add Microsoft Graph **Application** permission:
+   - `CopilotPackages.Read.All`
+3. Select **Grant admin consent** for your tenant (using **Privileged Role Administrator** or **Global Administrator**).
+4. In **Certificates & secrets**, create a new client secret and copy the value.
+5. Note these values for step 4:
+   - **Application (client) ID**
+   - **Directory (tenant) ID**
+   - **Client secret**
 
 ### 2. Create the SharePoint list
 
@@ -62,6 +74,7 @@ If you haven't already, create an app registration by following the instructions
    | Discourage Model Knowledge | Yes/No |
    | Available To | Single line of text |
    | Deployed To | Single line of text |
+   | Shared With | Person or Group (Allow selection of groups) |
 
 #### Configure the Agent Type choices
 
@@ -104,23 +117,31 @@ This displays connector IDs as a styled badge when present, or a dash when the f
 
 1. Go to [make.powerautomate.com](https://make.powerautomate.com) and select your target environment.
 2. Navigate to **Solutions** > **Import solution**.
-3. Select **Browse** and upload the [`CopilotAgentInventorySync_1_0_0_0.zip`](CopilotAgentInventorySync_1_0_0_0.zip) file.
+3. Select **Browse** and upload the [`CopilotAgentInventorySync_1_0_0_1.zip`](CopilotAgentInventorySync_1_0_0_1.zip) file.
 4. You will be prompted to set **Environment Variables**. Configure them as follows:
 
    | Variable | Value |
    | --- | --- |
    | **Inventory Sync SharePoint Site** | Select the SharePoint site where you created the list in step 2. |
    | **Inventory Sync Agents List** | Select the SharePoint list you created in step 2 (e.g. `Agents`). |
+   | **Inventory Sync Tenant ID** | The Entra tenant ID from step 1. |
+   | **Inventory Sync Client ID** | The Entra app registration client ID from step 1. |
+   | **Inventory Sync Client Secret** | The client secret value from step 1. |
 
 5. Select **Import**.
 
-### 5. Configure the custom connector and create a connection
+> **Security note:** The **Inventory Sync Client Secret** environment variable stores the app registration client secret in plain text. While the HTTP connector actions have been configured with secured inputs, for production deployments we recommend storing sensitive credentials in **Azure Key Vault** instead and retrieving them via managed identity or connector authentication. This sample is intended as a reference implementation.
 
-The solution includes the custom connector, but you need to configure its OAuth credentials and create a connection. Follow steps 2 onwards from the [Catalog Connector deployment guide](../catalog-connector/README.md#setup-and-deployment):
+### 5. Configure connections
 
-1. **[Configure OAuth 2.0 authentication](../catalog-connector/README.md#3-configure-oauth-20-authentication)** — edit the imported connector's Security tab and enter your Client ID, Client secret, Tenant ID, and Resource URL from your Entra ID app registration (step 1).
-2. **[Create a connection and test](../catalog-connector/README.md#4-create-a-connection-and-test)** — create a new connection and verify it works by testing the **Get Copilot Packages** operation.
-3. Once you have a working connection, return to the imported solution in **Solutions**. Find the **Inventory Sync Copilot Packages Connection** connection reference, select **Edit**, and update it to use the connection you just created.
+After import, open the solution and ensure all connection references are mapped to active connections:
+
+1. **Inventory Sync Microsoft Entra ID HTTP Connection**  
+   Create/select a connection for **HTTP with Microsoft Entra ID**. This preauthorized connector uses the connection owner's delegated user permissions for calls such as `directoryObjects/getByIds` (this is used to resolve the 'shared with' user details), so ensure that user has delegated `Directory.Read.All` (or use a service account with this permission).
+2. **Inventory Sync SharePoint Connection**  
+   Create/select a connection for **SharePoint**.
+3. **Inventory Sync Office 365 Users Connection**  
+   Create/select a connection for **Office 365 Users**.
 
 ### 6. Run the flow
 
@@ -140,7 +161,7 @@ The solution includes the custom connector, but you need to configure its OAuth 
 ## How it works
 
 1. The flow is triggered manually.
-2. It calls the custom connector's **Get Copilot Packages** action to retrieve all agents.
+2. It calls Microsoft Graph package endpoints using app credentials from environment variables (`Tenant ID`, `Client ID`, `Client Secret`) with the HTTP connector, it uses the HTTP with Microsoft Entra ID (preauthorized) to resolve shared users/groups in the connection owner's delegated user context.
 3. For each agent in the response, it creates a new item in the configured SharePoint list with the agent's metadata mapped to the list columns.
 
 > **Note:** The flow creates new items on each run. It does not update or deduplicate existing entries. To maintain a clean list, clear existing items before re-running, or extend the flow with upsert logic as needed.
@@ -149,7 +170,6 @@ The solution includes the custom connector, but you need to configure its OAuth 
 
 ## Known limitations
 
-- Items are processed synchronously with a concurrency control of 1 (the default) to avoid API rate limits. This means large tenants with many agents may experience longer run times.
 - The flow creates new list items only — it does not update existing entries if an agent's metadata has changed.
 - The flow may fail if an agent's owner ID cannot be resolved (see [Run the flow](#6-run-the-flow) note above).
 
@@ -184,7 +204,6 @@ The following features are planned for future releases of this sample:
 - [Microsoft Graph Package Management API](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/api/admin-settings/package/overview)
 - [Import a Power Platform solution](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/import-update-export-solutions)
 - [SharePoint list column formatting](https://learn.microsoft.com/en-us/sharepoint/dev/declarative-customization/column-formatting)
-- [Catalog Connector sample](../catalog-connector/)
 
 ---
 
