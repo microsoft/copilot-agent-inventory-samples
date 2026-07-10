@@ -19,7 +19,7 @@ Common capabilities unlocked by the API include:
 - Identifying duplicate, orphaned, or underused agents.
 - Supporting governance workflows such as attestation and lifecycle management.
 
-At the time of writing, the API supports delegated permissions only with application permissions planned.
+The API supports both delegated and application permissions, enabling flexible deployment scenarios including unattended automation and service account workflows.
 
 ---
 
