@@ -83,7 +83,7 @@ $ErrorActionPreference = 'Stop'
 # ---------------------------------------------------------------------------
 
 $Columns = @(
-    @{ Display = 'Agent Id';                   Internal = 'AgentId';                  Type = 'Text' }
+    @{ Display = 'Agent Id';                   Internal = 'AgentId';                  Type = 'Text'; Indexed = $true }
     @{ Display = 'Short Description';           Internal = 'ShortDescription';         Type = 'Note' }
     @{ Display = 'Long Description';            Internal = 'LongDescription';          Type = 'Note' }
     @{ Display = 'Instructions';               Internal = 'Instructions';             Type = 'Note' }
@@ -189,6 +189,21 @@ foreach ($col in $Columns) {
     if ($PSCmdlet.ShouldProcess($col.Display, "Add column")) {
         Add-PnPFieldFromXml -List $ListName -FieldXml (New-FieldXml $col) | Out-Null
         Write-Host "  Added: $($col.Display)" -ForegroundColor Green
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Index flagged columns
+#
+# Sync write-back queries the list with $filter=fields/<col> eq '...', which
+# SharePoint rejects unless the column is indexed, so flagged columns are indexed here.
+# ---------------------------------------------------------------------------
+
+foreach ($col in $Columns) {
+    if (-not $col.ContainsKey('Indexed') -or -not $col.Indexed) { continue }
+    if ($PSCmdlet.ShouldProcess($col.Display, 'Index column')) {
+        Set-PnPField -List $ListName -Identity $col.Internal -Values @{ Indexed = $true } | Out-Null
+        Write-Host "  Indexed: $($col.Display)" -ForegroundColor Green
     }
 }
 
