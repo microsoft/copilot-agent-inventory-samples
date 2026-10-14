@@ -1,0 +1,75 @@
+{
+    "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.3/schema.json",
+    "schema_version": "v2.3",
+    "name_for_human": "Copilot Governance",
+    "description_for_human": "Inspect and govern Copilot agents: view current state, then block, unblock, or reassign them.",
+    "description_for_model": "Reads and changes the state of individual Copilot agents through the Microsoft Graph Package Management API. Read operations retrieve an agent's current details (blocked state, availability, and deployment) and resolve directory objects to friendly names. Write operations block, unblock, and reassign an agent, then write the outcome back to the Agents SharePoint list. The agent inventory itself is read from the SharePoint knowledge source; these functions are used to inspect or change an individual agent's state and to keep its inventory-list row in sync.",
+    "namespace": "warden",
+    "capabilities": {},
+    "functions": [
+        {
+            "name": "warden_GetAgentDetail",
+            "description": "Retrieve the current details for a single agent by its Agent Id, including isBlocked, allowedUsersAndGroups (availability) and acquireUsersAndGroups (deployment). Use this to read current state before proposing a change."
+        },
+        {
+            "name": "warden_UpdatePackage",
+            "description": "Reassign who a single agent is available to (allowedUsersAndGroups) and/or deployed to (acquireUsersAndGroups) by its Agent Id. Each collection fully replaces the current value. This does NOT block an agent. Requires delegated admin permissions; returns 204 on success."
+        },
+        {
+            "name": "warden_BlockAgent",
+            "description": "Block a single agent by its Agent Id to prevent its usage across the organization. Takes no request body. Requires delegated admin permissions; returns 204 on success."
+        },
+        {
+            "name": "warden_UnblockAgent",
+            "description": "Unblock a single agent by its Agent Id to allow its usage again. Takes no request body. Requires delegated admin permissions; returns 204 on success."
+        },
+        {
+            "name": "warden_ReassignOwner",
+            "description": "Reassign ownership of a single agent to a different user by supplying the new owner's userId. Requires delegated admin permissions; returns 204 on success."
+        },
+        {
+            "name": "warden_SearchUsers",
+            "description": "Find users by display name or user principal name to resolve them to a directory id for a reassignment."
+        },
+        {
+            "name": "warden_SearchGroups",
+            "description": "Find groups by display name to resolve them to a directory id for a reassignment."
+        },
+        {
+            "name": "warden_ResolveDirectoryObjects",
+            "description": "Resolve a set of directory object ids (users or groups) to their display names, for showing a friendly before/after audience."
+        },
+        {
+            "name": "warden_FindAgentListItem",
+            "description": "Find the row in the Agents inventory list for an agent by its Agent Id, returning the SharePoint item id needed to update that row."
+        },
+        {
+            "name": "warden_UpdateAgentListItem",
+            "description": "Write the outcome of an action back to the Agents inventory list: update the Blocked, Available To, and/or Deployed To columns of the agent's row so the list stays accurate."
+        }
+    ],
+    "runtimes": [
+        {
+            "type": "OpenApi",
+            "auth": {
+                "type": "OAuthPluginVault",
+                "reference_id": "${{OAUTH_PLUGIN_VAULT_REFERENCE_ID}}"
+            },
+            "spec": {
+                "url": "apiSpecificationFile/openapi.yaml"
+            },
+            "run_for_functions": [
+                "warden_GetAgentDetail",
+                "warden_UpdatePackage",
+                "warden_BlockAgent",
+                "warden_UnblockAgent",
+                "warden_ReassignOwner",
+                "warden_SearchUsers",
+                "warden_SearchGroups",
+                "warden_ResolveDirectoryObjects",
+                "warden_FindAgentListItem",
+                "warden_UpdateAgentListItem"
+            ]
+        }
+    ]
+}
