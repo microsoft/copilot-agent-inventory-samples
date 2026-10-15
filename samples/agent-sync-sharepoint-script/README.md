@@ -5,6 +5,8 @@
 >
 > It is intended as a **reference implementation and starting point**, not a production-ready solution.
 >
+> **⚠️ Disclaimer:** Parts of this sample were "vibe coded" — rapidly built with AI assistance. Review and test it thoroughly in a non-production environment before deploying to production.
+>
 > Prefer a no-code approach? See the [Agent Sync SharePoint (Flow)](../agent-sync-sharepoint/) sample, which performs the same sync with a Power Automate flow.
 
 ---
