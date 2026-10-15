@@ -61,9 +61,11 @@ paths:
       description: >-
         Update who a single agent is available to (allowedUsersAndGroups) and/or
         deployed to (acquireUsersAndGroups). Each supplied collection fully
-        replaces the current value. This does NOT block an agent — use the block
-        and unblock actions for that. Requires delegated admin permissions.
-        Returns 204 No Content on success.
+        replaces the current value, and its scope enum must be sent with it:
+        availableTo is required when updating allowedUsersAndGroups, and
+        deployedTo is required when updating acquireUsersAndGroups. This does NOT
+        block an agent — use the block and unblock actions for that. Requires
+        delegated admin permissions. Returns 204 No Content on success.
       operationId: warden_UpdatePackage
       parameters:
         - name: id
@@ -79,14 +81,34 @@ paths:
             schema:
               type: object
               properties:
+                availableTo:
+                  type: string
+                  description: >-
+                    Availability scope. REQUIRED when updating allowedUsersAndGroups.
+                    Use allowedForSome with a specific allowedUsersAndGroups list,
+                    allowedForAll for everyone, or allowedForNone for no one.
+                  enum:
+                    - allowedForAll
+                    - allowedForSome
+                    - allowedForNone
                 allowedUsersAndGroups:
                   type: array
-                  description: The full set of users/groups the agent should be available to.
+                  description: The full set of users/groups the agent should be available to (used with availableTo = allowedForSome).
                   items:
                     $ref: "#/components/schemas/packageAccessEntity"
+                deployedTo:
+                  type: string
+                  description: >-
+                    Deployment scope. REQUIRED when updating acquireUsersAndGroups.
+                    Use acquiredForSome with a specific acquireUsersAndGroups list,
+                    acquiredForAll for everyone, or acquiredForNone for no one.
+                  enum:
+                    - acquiredForAll
+                    - acquiredForSome
+                    - acquiredForNone
                 acquireUsersAndGroups:
                   type: array
-                  description: The full set of users/groups the agent should be deployed to.
+                  description: The full set of users/groups the agent should be deployed to (used with deployedTo = acquiredForSome).
                   items:
                     $ref: "#/components/schemas/packageAccessEntity"
       responses:

@@ -4,7 +4,7 @@
 
 **Agent Warden** is a declarative agent for Microsoft 365 Copilot that lets IT admins and governance teams **take action** on the custom Copilot agents in their tenant. It reads the agent inventory from a **SharePoint list** (the same `Agents` list populated by the [agent-sync-sharepoint](../agent-sync-sharepoint/) sample) and makes governance changes — **blocking** agents and **reassigning availability and deployment** — through the Package Management API.
 
-It is the action-taking companion to [Agent Steward](../agent-steward/), which focuses on read-only discovery, classification, and analysis.
+> **Agent Warden supersedes [Agent Steward](../agent-steward/).** Agent Steward queries the Package Management API directly, which cannot page through large catalogs reliably, so its inventory and analysis are capped on bigger tenants. Agent Warden reads from a **pre-synced SharePoint list** instead, so it scales to the full inventory with filtering — and additionally **takes action** (block, unblock, reassign). The trade-off: you must create and sync the list first, via the [agent-sync-sharepoint](../agent-sync-sharepoint/) flow or the [PowerShell scripts](../agent-sync-sharepoint-script/). For governance at scale, use Agent Warden.
 
 ---
 

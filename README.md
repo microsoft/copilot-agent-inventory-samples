@@ -28,10 +28,13 @@ Common capabilities unlocked by the API include:
 | Sample | Platform | Description |
 | --- | --- | --- |
 | [Agent Steward](samples/agent-steward/) | Microsoft 365 Copilot Declarative Agent | A declarative agent built with the M365 Agents Toolkit for IT admins to discover, analyse, and govern Copilot agents — with a focus on identifying duplicates, analysing usage and surfacing org-wide consolidation opportunities. |
+| [Agent Warden](samples/agent-warden/) | Microsoft 365 Copilot Declarative Agent | A declarative agent that discovers, analyses **and takes action on** Copilot agents — block, unblock, and reassign availability/deployment. It reads inventory from a pre-synced SharePoint list so it scales to large tenants. The recommended successor to Agent Steward; requires the list to be created and synced first. |
 | [Catalog Connector](samples/catalog-connector/) | Microsoft Power Platform | A Power Platform custom connector for the Microsoft Graph Package Management API. Import the included swagger file to use the connector in Power Automate flows, Power Apps, and Logic Apps to list, filter, and retrieve Copilot agent metadata from your tenant. |
 | [Agent Sync SharePoint](samples/agent-sync-sharepoint/) | Microsoft Power Platform | A Power Automate flow (delivered as an unmanaged solution) that syncs your tenant's Copilot agent inventory to a SharePoint list, giving admins a familiar, filterable view of all agents. |
 | [Agent Sync SharePoint (PowerShell)](samples/agent-sync-sharepoint-script/) | PowerShell | A pair of app-only PowerShell scripts that provision a SharePoint list and sync your tenant's Copilot agent inventory to it — a code-based alternative to the Power Automate flow, with pagination and upsert support. |
 | [Attestation — COMING SOON](samples/attestation/) | Microsoft Power Platform | A Power Automate-based solution that retrieves agent inventory from the API, stores it in SharePoint or Dataverse, and drives attestation and lifecycle management workflows. |
+
+> **Agent Steward vs Agent Warden.** Both are Microsoft 365 Copilot declarative agents for governance. [Agent Steward](samples/agent-steward/) queries the Package Management API directly — the simplest to set up (no list required), but it cannot page through large catalogs, so its inventory and analysis are capped on bigger tenants. [Agent Warden](samples/agent-warden/) reads from a pre-synced SharePoint list (populated by [Agent Sync SharePoint](samples/agent-sync-sharepoint/) or the [PowerShell scripts](samples/agent-sync-sharepoint-script/)), so it scales to the full inventory **and** can take action. For governance at scale, **Agent Warden is recommended** — just create and sync the list first.
 
 ---
 

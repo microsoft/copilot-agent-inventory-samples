@@ -42,7 +42,7 @@
       "text": "Summarise the custom agents in the inventory list, grouped by agent type."
     },
     {
-      "title": "� Find duplicate agents",
+      "title": "🧬 Find duplicate agents",
       "text": "Identify common themes and potential duplicate agents in the inventory so I can decide what to block or consolidate."
     },
     {
@@ -54,7 +54,7 @@
       "text": "Which agents are available or deployed to everyone in the tenant?"
     },
     {
-      "title": "Blocked agents",
+      "title": "🚫 Blocked agents",
       "text": "Which agents are currently blocked, and which are not?"
     },
     {

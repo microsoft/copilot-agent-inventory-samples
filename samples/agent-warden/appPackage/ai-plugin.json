@@ -1,7 +1,7 @@
 {
     "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.3/schema.json",
     "schema_version": "v2.3",
-    "name_for_human": "Copilot Governance",
+    "name_for_human": "Package Management Graph API",
     "description_for_human": "Inspect and govern Copilot agents: view current state, then block, unblock, or reassign them.",
     "description_for_model": "Reads and changes the state of individual Copilot agents through the Microsoft Graph Package Management API. Read operations retrieve an agent's current details (blocked state, availability, and deployment) and resolve directory objects to friendly names. Write operations block, unblock, and reassign an agent, then write the outcome back to the Agents SharePoint list. The agent inventory itself is read from the SharePoint knowledge source; these functions are used to inspect or change an individual agent's state and to keep its inventory-list row in sync.",
     "namespace": "warden",
