@@ -91,6 +91,8 @@ $Columns = @(
     @{ Display = 'Last Modified';              Internal = 'AgentLastModified';        Type = 'DateTime' }
     @{ Display = 'Agent Type';                 Internal = 'AgentType';                Type = 'Choice'
         Choices = @('Agent Builder', 'Copilot Studio', 'LOB', 'Unknown') }
+    @{ Display = 'Distribution';               Internal = 'Distribution';             Type = 'Choice'
+        Choices = @('Shared', 'Org-deployed') }
     @{ Display = 'Capabilities';               Internal = 'Capabilities';             Type = 'Note'; Formatting = 'capabilities.json' }
     @{ Display = 'Graph Connector Ids';        Internal = 'GraphConnectorIds';        Type = 'Note'; Formatting = 'graph-connector-ids.json' }
     @{ Display = 'Websites';                   Internal = 'Websites';                 Type = 'Note' }
@@ -244,7 +246,7 @@ $defaultView = Get-PnPView -List $ListName | Where-Object { $_.DefaultView } | S
 if ($defaultView -and $PSCmdlet.ShouldProcess($defaultView.Title, 'Update default view columns')) {
     # Internal field order: Title, Agent Id, then the rest (mirrors the 'Agents' list).
     $viewFields = @(
-        'LinkTitle', 'AgentId', 'ShortDescription', 'Blocked', 'AgentLastModified', 'AgentType',
+        'LinkTitle', 'AgentId', 'ShortDescription', 'Blocked', 'AgentLastModified', 'AgentType', 'Distribution',
         'Instructions', 'LongDescription', 'Capabilities', 'GraphConnectorIds', 'Websites',
         'ODSPSites', 'AgentOwner', 'SuggestedPrompts', 'DiscourageModelKnowledge',
         'AvailableTo', 'DeployedTo', 'SharedWith'

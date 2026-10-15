@@ -116,6 +116,18 @@ function Get-AgentType {
     return 'Unknown'
 }
 
+function Get-AgentDistribution {
+    <# Distinguishes a user-shared package (type 'shared') from an org-deployed one (type 'lob').
+       The same agent can appear as both once it is submitted and approved for the org store,
+       so this is what tells the two otherwise-identical list rows apart. #>
+    param($Package)
+    switch ($Package.type) {
+        'shared' { 'Shared' }
+        'lob'    { 'Org-deployed' }
+        default  { $null }
+    }
+}
+
 # ---------------------------------------------------------------------------
 # REST helpers
 # ---------------------------------------------------------------------------
@@ -240,6 +252,7 @@ function Build-AgentValues {
         'Long Description'           = $(if ($detail.longDescription) { $detail.longDescription } else { $Package.longDescription })
         'Blocked'                    = [bool]$Package.isBlocked
         'Agent Type'                 = Get-AgentType -Package $Package
+        'Distribution'               = Get-AgentDistribution -Package $Package
         'Instructions'               = $manifest.instructions
         'Capabilities'               = Join-Values $capabilityNames
         'Graph Connector Ids'        = Join-Values $graphConnectors
@@ -383,6 +396,7 @@ $fnInvokeWithRetry  = ${function:Invoke-WithRetry}.ToString()
 $fnInvokeGraph      = ${function:Invoke-GraphRequest}.ToString()
 $fnResolvePrincipal = ${function:Resolve-Principal}.ToString()
 $fnGetAgentType     = ${function:Get-AgentType}.ToString()
+$fnGetDistribution  = ${function:Get-AgentDistribution}.ToString()
 $fnGetManifest      = ${function:Get-AgentManifest}.ToString()
 $fnGetCapability    = ${function:Get-Capability}.ToString()
 $fnJoinValues       = ${function:Join-Values}.ToString()
@@ -393,6 +407,7 @@ $records = @($customAgents) | ForEach-Object -ThrottleLimit $ThrottleLimit -Para
     ${function:Invoke-GraphRequest} = $using:fnInvokeGraph
     ${function:Resolve-Principal}   = $using:fnResolvePrincipal
     ${function:Get-AgentType}       = $using:fnGetAgentType
+    ${function:Get-AgentDistribution} = $using:fnGetDistribution
     ${function:Get-AgentManifest}   = $using:fnGetManifest
     ${function:Get-Capability}      = $using:fnGetCapability
     ${function:Join-Values}         = $using:fnJoinValues

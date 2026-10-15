@@ -20,6 +20,8 @@ This sample contains two PowerShell scripts, both using [PnP.PowerShell](https:/
 
 The scripts sync **custom agents only** — those built in Agent Builder, Copilot Studio, or as custom declarative agents (`type` of `shared` or `lob`). First-party (Microsoft) and third-party (store/partner) agents are skipped. The `Agent Type` column is classified from the agent's `elementTypes` and `type` fields (`CustomEngineCopilots` → Copilot Studio, `DeclarativeCopilots` → Agent Builder, `lob` → LOB, otherwise Unknown).
 
+The same agent can appear **twice** — once as a user-**shared** package and again as an **org-deployed** package — after it is submitted to and approved for the organization's store. These are distinct packages with different ids, so both are listed; the `Distribution` column tells them apart (`Shared` for `type` `shared`, `Org-deployed` for `type` `lob`).
+
 ---
 
 ## Prerequisites
@@ -112,6 +114,7 @@ This creates a **Copilot Agents** list (at the unencoded URL `Lists/CopilotAgent
 | Blocked | Yes/No |
 | Last Modified | Date and Time |
 | Agent Type | Choice (`Agent Builder`, `Copilot Studio`, `LOB`, `Unknown`) |
+| Distribution | Choice (`Shared`, `Org-deployed`) |
 | Capabilities | Multiple lines of text |
 | Graph Connector Ids | Multiple lines of text |
 | Websites | Multiple lines of text |
