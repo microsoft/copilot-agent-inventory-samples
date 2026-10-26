@@ -2,7 +2,7 @@
 
 > **This is a sample.** Agent Warden demonstrates the art of the possible with the [Microsoft Graph Package Management API](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/api/admin-settings/package/overview) write operations. It is a reference implementation and starting point, not a production-ready governance tool.
 
-**Agent Warden** is a declarative agent for Microsoft 365 Copilot that lets IT admins and governance teams **take action** on the custom Copilot agents in their tenant. It reads the agent inventory from a **SharePoint list** (the same `Agents` list populated by the [agent-sync-sharepoint](../agent-sync-sharepoint/) sample) and makes governance changes — **blocking** agents and **reassigning availability and deployment** — through the Package Management API.
+**Agent Warden** is a declarative agent for Microsoft 365 Copilot that lets IT admins and governance teams **take action** on the custom Copilot agents in their tenant. It reads the agent inventory from a **SharePoint list** (the same `Agents` list populated by the [agent-sync-sharepoint](https://github.com/microsoft/copilot-agent-inventory-samples/tree/main/samples/agent-sync-sharepoint) sample) and makes governance changes — **blocking** agents and **reassigning availability and deployment** — through the Package Management API.
 
 ![Agent Warden in Microsoft 365 Copilot](agent-warden-screenshot.png)
 
@@ -30,11 +30,11 @@ flowchart LR
     A[Admin in M365 Copilot] --> B[Agent Warden]
     B -- reads inventory --> C[(Agents SharePoint list)]
     B -- reads usage --> F[Insights Agent<br/>connected agent]
-    B -- block / reassign --> D[Package Management API<br/>PATCH /packages/&#123;id&#125;]
+   B -- block / reassign --> D["Package Management API<br/>PATCH /packages/{id}"]
     B -- resolve names/ids --> E[Microsoft Graph<br/>users / groups / directoryObjects]
 ```
 
-The `Agents` list is kept up to date by the [agent-sync-sharepoint](../agent-sync-sharepoint/) sample. Agent Warden reads from it for inventory, sources usage data from the connected **Insights Agent**, and uses the API plugin only for write actions and directory lookups.
+The `Agents` list is kept up to date by the [agent-sync-sharepoint](https://github.com/microsoft/copilot-agent-inventory-samples/tree/main/samples/agent-sync-sharepoint) sample. Agent Warden reads from it for inventory, sources usage data from the connected **Insights Agent**, and uses the API plugin only for write actions and directory lookups.
 
 ## Sample prompts
 
@@ -55,7 +55,7 @@ The `Agents` list is kept up to date by the [agent-sync-sharepoint](../agent-syn
 - [Microsoft 365 Agents Toolkit VS Code Extension](https://aka.ms/teams-toolkit) version 5.0.0 or higher
 - A Microsoft 365 tenant with [Microsoft 365 Copilot licences](https://learn.microsoft.com/microsoft-365-copilot/extensibility/prerequisites#prerequisites)
 - Access to the Package Management API — requires a Microsoft Agent 365 license
-- The **`Agents` SharePoint list** populated by the [agent-sync-sharepoint](../agent-sync-sharepoint/) sample
+- The **`Agents` SharePoint list** populated by the [agent-sync-sharepoint](https://github.com/microsoft/copilot-agent-inventory-samples/tree/main/samples/agent-sync-sharepoint) sample
 - Each user needs **Read** access to the inventory list for knowledge grounding, plus permission to **edit its list items** for action write-back (for example, **Contribute** on the list)
 - Each user must have access to and **install the native Microsoft Insights Agent in Microsoft 365 Copilot** before Agent Warden can call it for usage and adoption data. Installing Agent Warden alone does not satisfy this prerequisite
 - For governance actions, use an account with an active **[AI Administrator](https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference#ai-administrator)** role (recommended instead of the broader **Global Administrator** role, which also supports administration). Activate the role first if assigned through Privileged Identity Management. The Package Management **write** endpoints support **delegated authentication only**, so calls are made as the signed-in user; OAuth consent alone does not grant the user an admin role
@@ -79,8 +79,18 @@ Agent Warden reads inventory from the `Agents` SharePoint list as a knowledge so
 
 > **The current user must have list access.** SharePoint knowledge grounding respects the signed-in user's existing SharePoint permissions; adding the list URL to the agent does not grant access or expose items the user cannot read. This built-in knowledge access is separate from the API plugin's OAuth registration and does not use its `Sites.Selected` scope. Write-back through the plugin uses **delegated** Graph permissions and requires both the user's permission to edit the relevant list items and the app's explicit **Write** grant on the site when using `Sites.Selected` (see step 3 below). Neither an AI Administrator/Global Administrator role nor the app's site grant automatically gives the user access to list content. Before using Agent Warden, verify that the intended user can open the list and edit an item directly in SharePoint.
 
-1. Make sure the [agent-sync-sharepoint](../agent-sync-sharepoint/) sample has been run so the `Agents` list is populated.
-2. Open **env/env.dev.user** (gitignored) and set `SHAREPOINT_AGENTS_LIST_URL` to the list URL:
+1. Make sure the [agent-sync-sharepoint](https://github.com/microsoft/copilot-agent-inventory-samples/tree/main/samples/agent-sync-sharepoint) sample has been run so the `Agents` list is populated.
+2. Create **env/.env.dev.user** in the sample's **env** folder if it does not already exist. This per-user file is gitignored, so it is **not included when you clone the repository**. Create it before provisioning; the Agents Toolkit loads it alongside **env/.env.dev** when you use the **dev** environment. Keep your tenant-specific values in the user file, not the committed **env/.env.dev** template.
+
+   From the **samples/agent-warden** directory, you can create the empty file in PowerShell without overwriting an existing one:
+
+   ```powershell
+   if (-not (Test-Path -LiteralPath 'env/.env.dev.user')) {
+      New-Item -ItemType File -Path 'env/.env.dev.user' | Out-Null
+   }
+   ```
+
+   Open **env/.env.dev.user** and set `SHAREPOINT_AGENTS_LIST_URL` to the list URL:
 
    ```
    SHAREPOINT_AGENTS_LIST_URL=https://<your-tenant>.sharepoint.com/sites/<your-site>/Lists/Agents
@@ -88,15 +98,17 @@ Agent Warden reads inventory from the `Agents` SharePoint list as a knowledge so
 
    > The Agents Toolkit substitutes this value into `declarativeAgent.json` at build time.
 
-3. **For write-back** (updating the list after an action), the agent needs the Graph **site id** and **list id**. Set them in **env/env.dev.user** (gitignored); the Agents Toolkit substitutes them into `openapi.yaml` at build time:
+3. **For write-back** (updating the list after an action), the agent needs the Graph **site id** and **list id**. Set them in **env/.env.dev.user** (gitignored); the Agents Toolkit substitutes them into `openapi.yaml` at build time:
 
    ```
    SHAREPOINT_AGENTS_SITE_ID=<tenant>.sharepoint.com,<site-collection-id>,<web-id>
    SHAREPOINT_AGENTS_LIST_ID=<list-guid>
    ```
 
-   - Site id — `GET https://graph.microsoft.com/v1.0/sites/<tenant>.sharepoint.com:/sites/<your-site>` → `id`
-   - List id — `GET https://graph.microsoft.com/v1.0/sites/<site-id>/lists?$filter=displayName eq 'Agents'` → `value[0].id`
+   Use [Microsoft Graph Explorer](https://developer.microsoft.com/graph/graph-explorer), signed in to the same tenant with an account that can access the site. Graph Explorer needs its own delegated Graph permissions for these requests (for example, `Sites.Read.All`); this is separate from the Warden plugin's OAuth registration.
+
+   - **Site id, including the web id** — Run `GET https://graph.microsoft.com/v1.0/sites/<tenant>.sharepoint.com:/sites/<your-site>` and copy the **entire `id` value** from the response into `SHAREPOINT_AGENTS_SITE_ID`. Graph returns all three comma-separated components: `<hostname>,<site-collection-id>,<web-id>`. The **third component is the web id**, so you do not need to find it separately or construct the composite id yourself. Do not use only the web id or only the site-collection id.
+   - **List id** — Run `GET https://graph.microsoft.com/v1.0/sites/<site-id>/lists?$filter=displayName eq 'Agents'`, replacing `<site-id>` with that entire composite id and `Agents` with your list's display name. Copy `value[0].id` into `SHAREPOINT_AGENTS_LIST_ID`.
 4. Index the **Agent Id** column so write-back lookups (`$filter`) work: in the list, open **Agent Id** column settings and ensure it is indexed (List settings > Indexed columns), or the sample script/PnP `Set-PnPField -List Agents -Identity AgentId -Values @{ Indexed = $true }`.
 
 > **Install the Insights Agent before using usage-based analysis.** Agent Warden is configured with the native Microsoft **Insights Agent** as a connected agent (declared in the `worker_agents` array of [appPackage/declarativeAgent.json](appPackage/declarativeAgent.json)) to source usage and adoption figures. **Each user must install Insights Agent in Microsoft 365 Copilot before Agent Warden can call it**; tenant access and installing Agent Warden are not enough. If Insights Agent is unavailable, contact your tenant administrator to enable access. No additional connected-agent configuration is required in this sample. Without Insights Agent installed and accessible, inventory, blocking, and reassignment still work, but usage-based analysis is unavailable.
@@ -138,7 +150,7 @@ The API plugin calls the Package Management **write** endpoint and Microsoft Gra
 
    > Replace `<your-tenant-id>` with your Entra ID tenant ID. Using tenant-specific endpoints rather than `/common` is required for the Teams OAuth flow.
 5. Save the registration and copy the **OAuth registration ID**.
-6. Open **env/env.dev.user** and set the reference ID:
+6. Open **env/.env.dev.user** and set the reference ID:
 
    ```
    OAUTH_PLUGIN_VAULT_REFERENCE_ID=<your-reference-id>
@@ -179,7 +191,7 @@ Agent Warden makes changes to live agents, so its instructions enforce a confirm
 - [Microsoft Graph Package Management API](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/api/admin-settings/package/overview)
 - [Declarative agents for Microsoft 365](https://aka.ms/teams-toolkit-declarative-agent)
 - [Extend Microsoft 365 Copilot with API plugins](https://learn.microsoft.com/microsoft-365-copilot/extensibility/overview-api-plugin)
-- [agent-sync-sharepoint sample](../agent-sync-sharepoint/) — populates the `Agents` list
+- [agent-sync-sharepoint sample](https://github.com/microsoft/copilot-agent-inventory-samples/tree/main/samples/agent-sync-sharepoint) — populates the `Agents` list
 
 ---
 
