@@ -143,9 +143,40 @@ Run the sync script to populate (or refresh) the list:
     -ListName    "Copilot Agents"
 ```
 
-Use `-CertificatePath` / `-CertificatePassword` instead of `-CertificateThumbprint` to authenticate with a PFX file. Pass `-MaxAgents <n>` to process only the first *n* agents (useful for testing), `-ClearList` to delete all existing items before syncing, or `-WhatIf` to preview the changes without writing anything.
+Use `-CertificatePath` / `-CertificatePassword` instead of `-CertificateThumbprint` to authenticate with a PFX file. Pass `-MaxAgents <n>` to process at most *n* pending agents (useful for testing), `-ClearList` to delete all existing items before syncing, or `-WhatIf` to preview the changes without writing anything.
 
-By default the script fetches up to **5 agents from Graph in parallel** to speed up larger tenants. Tune this with `-ThrottleLimit <1-20>` (set `1` for fully sequential). Only the Graph detail/owner lookups run in parallel; the SharePoint writes are always sequential to avoid list throttling.
+> **Allow for long runtimes.** Large inventories can take many hours to sync. In one test, the main sync pass processing approximately **11,000 agent packages took 10 hours 32 minutes**, including network retries, with batches of 25 and two parallel Graph workers. This is an observation, not a guaranteed duration: agent count, owner/group lookups, network latency, service throttling, and sequential SharePoint writes all affect runtime.
+>
+> Plan for an overnight run, test a small batch with `-MaxAgents` first, and ensure your scheduled host's execution limits accommodate the workload. Keep the checkpoint in persistent storage so an interrupted run can continue with [`-Resume`](#resume-an-interrupted-sync).
+
+By default the script processes **25 agents per batch**, fetching up to **2 agents from Graph in parallel**. Tune these with `-BatchSize <1-1000>` and `-ThrottleLimit <1-20>` (set `1` for fully sequential). Each batch is written to SharePoint before the next batch is fetched. SharePoint writes are always sequential.
+
+Graph requests reuse an HTTP session per worker, including retries, reducing repeated connection setup. On PowerShell 7.4 and later this retains the underlying HTTP connection pool. The initial SharePoint read requests only the `Agent Id` field instead of downloading instructions and other large inventory fields. Each completed batch reports separate Graph-fetch and SharePoint/checkpoint times.
+
+For a large inventory, start with `-ThrottleLimit 2`; increasing concurrency aggressively can increase service throttling. HTTP 429 indicates throttling, while a timeout or connection failure without an HTTP response is not evidence of throttling by itself. The script honors `Retry-After` when supplied. Reuse connections and inspect the batch timings before increasing the worker count.
+
+### Resume an interrupted sync
+
+Each successful SharePoint write is saved to a local JSON checkpoint. The default location is a tenant/site/list-specific file under the current user's local application data folder (`CopilotAgentInventorySync`); its path is printed at startup. Use `-CheckpointPath` to select a persistent location outside the repository. Checkpoints contain agent IDs and modification timestamps, not credentials. Do not share one checkpoint between concurrent runs.
+
+```powershell
+$sync = @{
+  TenantId = '<tenant-id>'
+  ClientId = '<app-client-id>'
+  CertificateThumbprint = '<thumbprint>'
+  SiteUrl = 'https://contoso.sharepoint.com/sites/Governance'
+  ListName = 'Copilot Agents'
+  CheckpointPath = "$env:LOCALAPPDATA/CopilotAgentInventorySync/inventory.json"
+  BatchSize = 25
+  ThrottleLimit = 1
+}
+./scripts/Sync-CopilotAgents.ps1 @sync -MaxAgents 25
+./scripts/Sync-CopilotAgents.ps1 @sync -Resume -MaxAgents 25
+```
+
+`-Resume` skips checkpointed agents that still exist in the list and have the same package modification timestamp. It applies `-MaxAgents` **after** that check, so repeated limited runs advance through pending agents. Failed agents remain pending. Omit `-Resume` for a fresh full refresh and a new checkpoint. A missing checkpoint or mismatched tenant/site/list is rejected; `-Resume` cannot be combined with `-ClearList`. `-WhatIf` does not change the list or checkpoint.
+
+Graph requests time out after 45 seconds by default (`-RequestTimeoutSeconds <5-300>`). Transient failures receive up to four attempts with exponential backoff, honoring `Retry-After`. After three consecutive transient agent failures (`-MaxConsecutiveFailures`), the script saves successful records from the current batch and stops with an error. With parallel fetching, the current batch finishes before stopping. Any remaining failures also produce a failing exit status, allowing schedulers to detect incomplete runs.
 
 Re-run the script at any time to refresh the inventory; items are matched on the `Agent Id` column and updated in place, so no duplicates are created. Blank or missing fields are skipped, so a re-sync never overwrites existing data with empty values.
 
@@ -227,13 +258,15 @@ Set the task to run whether or not the user is logged on, under an account that 
 ## How it works
 
 1. `New-CopilotAgentList.ps1` connects to SharePoint app-only, creates the list if it does not exist, and adds any missing columns from its schema definition (skipping ones that already exist). It then applies the column formatting JSON to the relevant columns.
-2. `Sync-CopilotAgents.ps1` acquires a Graph token from the same app-only connection, lists Copilot packages from the **Graph v1.0** Package Management API (following pagination), and excludes first-party and third-party agents. It then runs in two phases: **Phase 1** fetches each agent's detail and resolves owner/shared-with principals *in parallel* (up to `-ThrottleLimit` at a time), building the field values for each. **Phase 2** upserts the pre-built records into SharePoint sequentially over the single PnP connection (matched on `Agent Id`). Transient Graph failures are retried with exponential backoff, and blank fields are dropped so a re-sync never clears existing data.
+2. `Sync-CopilotAgents.ps1` acquires a Graph token from the same app-only connection, lists Copilot packages from the **Graph v1.0** Package Management API (following pagination), and excludes first-party and third-party agents. It filters completed agents when resuming, then fetches details and resolves principals in bounded batches. Each batch is upserted sequentially over the single PnP connection (matched on `Agent Id`), checkpointing each successful write. The Graph token is requested again at each batch boundary. Transient Graph failures are retried, and blank fields are dropped so a re-sync never clears existing data.
 
 ---
 
 ## Known limitations
 
-- Owner and shared-with resolution depends on the directory object still existing; unresolvable principals are logged as warnings and skipped for that field.
+- Owner and shared-with resolution depends on the directory object still existing. Confirmed directory 404s are logged, skipped, and cached for the run. Other lookup errors fail that agent so incomplete enrichment is not checkpointed as successful.
+- Package enumeration still follows every continuation page before detail batching begins; `-MaxAgents` limits enrichment and writes, not package enumeration. The service may return more records than the requested page size.
+- Resume is for recovering an interrupted run, not a substitute for scheduled full refreshes: directory membership and other metadata may change without changing a package modification timestamp.
 - Graph detail lookups run in parallel (`-ThrottleLimit`), but SharePoint writes are sequential, so very large tenants will still spend most of their time on the write phase.
 
 ---
