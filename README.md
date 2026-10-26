@@ -6,6 +6,8 @@ A collection of sample solutions that demonstrate what is possible with the **Mi
 
 Each sample targets a different platform or persona and is designed as a **reference implementation and starting point**, not a production-ready solution.
 
+> **⚠️ Disclaimer:** Some of these samples have been "vibe coded" — rapidly built with AI assistance — and are provided as-is. Always review, test, and validate any sample in a non-production environment before deploying it to production.
+
 ---
 
 ## The API

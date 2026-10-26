@@ -85,11 +85,24 @@ param(
     [Parameter(Mandatory)] [string] $SiteUrl,
     [string] $ListName = 'Copilot Agents',
 
+    [ValidateRange(0, 2147483647)]
     [int] $MaxAgents = 0,
+
+    [ValidateRange(1, 1000)]
+    [int] $BatchSize = 25,
+
+    [ValidateRange(5, 300)]
+    [int] $RequestTimeoutSeconds = 45,
+
+    [ValidateRange(1, 20)]
+    [int] $MaxConsecutiveFailures = 3,
+
+    [string] $CheckpointPath,
+    [switch] $Resume,
 
     # Number of agents to fetch from Graph in parallel (SharePoint writes stay sequential).
     [ValidateRange(1, 20)]
-    [int] $ThrottleLimit = 5,
+    [int] $ThrottleLimit = 2,
 
     # Delete every existing item in the list before syncing (useful for fresh imports).
     [switch] $ClearList
@@ -101,6 +114,36 @@ $ErrorActionPreference = 'Stop'
 # yield $null rather than throw.
 
 $GraphBase = 'https://graph.microsoft.com/v1.0'
+$script:RequestTimeoutSeconds = $RequestTimeoutSeconds
+if ($Resume -and $ClearList) { throw '-Resume cannot be combined with -ClearList.' }
+$checkpointScope = "$($TenantId.ToLowerInvariant())|$($SiteUrl.TrimEnd('/').ToLowerInvariant())|$($ListName.ToLowerInvariant())"
+if (-not $CheckpointPath) {
+    $scopeHash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($checkpointScope))).ToLowerInvariant()
+    $CheckpointPath = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) "CopilotAgentInventorySync/$scopeHash.json"
+}
+$script:CheckpointPath = [IO.Path]::GetFullPath($CheckpointPath)
+$script:CheckpointState = @{ Version = 1; Scope = $checkpointScope; Completed = @{} }
+if ($Resume) {
+    if (-not (Test-Path -LiteralPath $script:CheckpointPath)) { throw 'Resume checkpoint not found. Run once without -Resume first.' }
+    $savedState = Get-Content -LiteralPath $script:CheckpointPath -Raw | ConvertFrom-Json -AsHashtable
+    if ($savedState.Version -ne 1 -or $savedState.Scope -ne $checkpointScope -or $savedState.Completed -isnot [System.Collections.IDictionary]) {
+        throw 'Checkpoint version or tenant/site/list scope does not match this run.'
+    }
+    $script:CheckpointState = $savedState
+}
+
+function Save-SyncCheckpoint {
+    if ($WhatIfPreference) { return }
+    $directory = Split-Path -Parent $script:CheckpointPath
+    [IO.Directory]::CreateDirectory($directory) | Out-Null
+    $temporaryPath = "$script:CheckpointPath.$([guid]::NewGuid().ToString('N')).tmp"
+    try {
+        $script:CheckpointState | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $temporaryPath -Encoding utf8
+        [IO.File]::Move($temporaryPath, $script:CheckpointPath, $true)
+    } finally {
+        if (Test-Path -LiteralPath $temporaryPath) { Remove-Item -LiteralPath $temporaryPath -Force }
+    }
+}
 
 # ---------------------------------------------------------------------------
 # Classification
@@ -116,6 +159,18 @@ function Get-AgentType {
     return 'Unknown'
 }
 
+function Get-AgentDistribution {
+    <# Distinguishes a user-shared package (type 'shared') from an org-deployed one (type 'lob').
+       The same agent can appear as both once it is submitted and approved for the org store,
+       so this is what tells the two otherwise-identical list rows apart. #>
+    param($Package)
+    switch ($Package.type) {
+        'shared' { 'Shared' }
+        'lob'    { 'Org-deployed' }
+        default  { $null }
+    }
+}
+
 # ---------------------------------------------------------------------------
 # REST helpers
 # ---------------------------------------------------------------------------
@@ -128,10 +183,17 @@ function Invoke-WithRetry {
         catch {
             $status = $null
             try { $status = [int]$_.Exception.Response.StatusCode } catch { }
-            $transient = $status -in 429, 500, 502, 503, 504 -or $null -eq $status
-            if (-not $transient -or $attempt -ge $MaxAttempts) { throw }
+            $transient = $status -in 0, 408, 429, 500, 502, 503, 504 -or $null -eq $status
+            $statusLabel = if ($null -eq $status -or $status -eq 0) { 'no HTTP response' } else { "HTTP $status" }
+            if (-not $transient -or $attempt -ge $MaxAttempts) {
+                Write-Warning "Request failed ($statusLabel, attempt $attempt/$MaxAttempts): $($_.Exception.Message)"
+                throw
+            }
             $delay = [math]::Min(30, [math]::Pow(2, $attempt))
-            Write-Warning "Request failed (attempt $attempt/$MaxAttempts): $($_.Exception.Message). Retrying in ${delay}s..."
+            $retryAfter = $_.Exception.Response.Headers.RetryAfter
+            if ($retryAfter.Delta) { $delay = [math]::Max($delay, [math]::Ceiling($retryAfter.Delta.TotalSeconds)) }
+            elseif ($retryAfter.Date) { $delay = [math]::Max($delay, [math]::Ceiling(($retryAfter.Date - [DateTimeOffset]::UtcNow).TotalSeconds)) }
+            Write-Warning "Request failed ($statusLabel, attempt $attempt/$MaxAttempts): $($_.Exception.Message). Retrying in ${delay}s..."
             Start-Sleep -Seconds $delay
         }
     }
@@ -139,7 +201,12 @@ function Invoke-WithRetry {
 
 function Invoke-GraphRequest {
     param([string] $Uri, [string] $Method = 'Get')
-    Invoke-WithRetry { Invoke-RestMethod -Method $Method -Uri $Uri -Headers $script:GraphHeaders }
+    if ($null -eq $script:GraphSession) {
+        $script:GraphSession = [Microsoft.PowerShell.Commands.WebRequestSession]::new()
+    }
+    Invoke-WithRetry {
+        Invoke-RestMethod -Method $Method -Uri $Uri -Headers $script:GraphHeaders -WebSession $script:GraphSession -TimeoutSec $script:RequestTimeoutSeconds
+    }
 }
 
 # ---------------------------------------------------------------------------
@@ -152,7 +219,10 @@ function Resolve-Principal {
     <# Resolves a directory object id to a login usable by a SharePoint person/group field. #>
     param([string] $Id)
     if ([string]::IsNullOrWhiteSpace($Id)) { return $null }
-    if ($script:PrincipalCache.ContainsKey($Id)) { return $script:PrincipalCache[$Id] }
+    if ($script:PrincipalCache.ContainsKey($Id)) {
+        if ($script:PrincipalCache[$Id] -eq '') { return $null }
+        return $script:PrincipalCache[$Id]
+    }
 
     $login = $null
     try {
@@ -168,6 +238,10 @@ function Resolve-Principal {
         if ($login) { $script:PrincipalCache[$Id] = $login }  # cache successful resolutions only
     }
     catch {
+        $status = $null
+        try { $status = [int]$_.Exception.Response.StatusCode } catch { }
+        if ($status -ne 404) { throw }
+        $script:PrincipalCache[$Id] = ''
         Write-Warning "Could not resolve principal '$Id': $($_.Exception.Message)"
     }
     return $login
@@ -240,6 +314,7 @@ function Build-AgentValues {
         'Long Description'           = $(if ($detail.longDescription) { $detail.longDescription } else { $Package.longDescription })
         'Blocked'                    = [bool]$Package.isBlocked
         'Agent Type'                 = Get-AgentType -Package $Package
+        'Distribution'               = Get-AgentDistribution -Package $Package
         'Instructions'               = $manifest.instructions
         'Capabilities'               = Join-Values $capabilityNames
         'Graph Connector Ids'        = Join-Values $graphConnectors
@@ -286,6 +361,7 @@ Connect-PnPOnline @connectArgs
 
 # Acquire a Graph token from the same app-only connection.
 $graphToken = Get-PnPAccessToken -ResourceTypeName Graph
+if ($graphToken -is [securestring]) { $graphToken = [System.Net.NetworkCredential]::new('', $graphToken).Password }
 $script:GraphHeaders = @{
     Authorization = "Bearer $graphToken"
     Accept        = 'application/json'
@@ -343,7 +419,7 @@ if ($ClearList) {
 
 Write-Host "Loading existing list items..." -ForegroundColor Cyan
 $existingById = @{}
-foreach ($item in Get-PnPListItem -List $ListName -PageSize 500) {
+foreach ($item in Get-PnPListItem -List $ListName -Fields $idInternal -PageSize 500) {
     $key = "$($item.FieldValues[$idInternal])"
     if ($key) { $existingById[$key] = $item.Id }
 }
@@ -356,9 +432,14 @@ Write-Host "Retrieving Copilot packages from Graph (v1.0)..." -ForegroundColor C
 $packages = [System.Collections.Generic.List[object]]::new()
 $filter   = [uri]::EscapeDataString("supportedHosts/any(h:h eq 'Copilot')")
 $uri      = "$GraphBase/copilot/admin/catalog/packages?`$filter=$filter&`$top=100"
+$pageNumber = 0
 do {
+    $pageNumber++
+    Write-Host "  Fetching package page $pageNumber..." -ForegroundColor Cyan
+    $pageTimer = [System.Diagnostics.Stopwatch]::StartNew()
     $resp = Invoke-GraphRequest $uri
     foreach ($p in $resp.value) { $packages.Add($p) }
+    Write-Host ("  Page {0}: {1} package(s) in {2:N1}s; {3} total." -f $pageNumber, @($resp.value).Count, $pageTimer.Elapsed.TotalSeconds, $packages.Count)
     $uri = $resp.'@odata.nextLink'
 } while ($uri)
 
@@ -366,7 +447,16 @@ do {
 $customAgents = $packages | Where-Object { $_.type -in @('shared', 'lob') }
 Write-Host ("Found {0} package(s); {1} custom agent(s) after excluding 1P/3P." -f $packages.Count, @($customAgents).Count) -ForegroundColor Green
 
-if ($MaxAgents -gt 0) { $customAgents = @($customAgents) | Select-Object -First $MaxAgents }
+$customAgents = @($customAgents | Sort-Object id -Unique | Where-Object {
+    $packageId = [string]$_.id
+    $stamp = "modified:$($_.lastModifiedDateTime)"
+    -not ($Resume -and $existingById.ContainsKey($packageId) -and
+        $script:CheckpointState.Completed.Contains($packageId) -and
+        $script:CheckpointState.Completed[$packageId] -eq $stamp)
+})
+Write-Host ("Pending after resume checks: {0}. Checkpoint: {1}" -f $customAgents.Count, $script:CheckpointPath) -ForegroundColor Cyan
+if ($MaxAgents -gt 0) { $customAgents = @($customAgents | Select-Object -First $MaxAgents) }
+Save-SyncCheckpoint
 
 # ---------------------------------------------------------------------------
 # Phase 1 - fetch agent details and build records (parallel, Graph only)
@@ -383,73 +473,129 @@ $fnInvokeWithRetry  = ${function:Invoke-WithRetry}.ToString()
 $fnInvokeGraph      = ${function:Invoke-GraphRequest}.ToString()
 $fnResolvePrincipal = ${function:Resolve-Principal}.ToString()
 $fnGetAgentType     = ${function:Get-AgentType}.ToString()
+$fnGetDistribution  = ${function:Get-AgentDistribution}.ToString()
 $fnGetManifest      = ${function:Get-AgentManifest}.ToString()
 $fnGetCapability    = ${function:Get-Capability}.ToString()
 $fnJoinValues       = ${function:Join-Values}.ToString()
 $fnBuildValues      = ${function:Build-AgentValues}.ToString()
+$requestTimeout     = $RequestTimeoutSeconds
+$created = 0; $updated = 0; $failed = 0
+$consecutiveFailures = 0
 
-$records = @($customAgents) | ForEach-Object -ThrottleLimit $ThrottleLimit -Parallel {
-    ${function:Invoke-WithRetry}    = $using:fnInvokeWithRetry
-    ${function:Invoke-GraphRequest} = $using:fnInvokeGraph
-    ${function:Resolve-Principal}   = $using:fnResolvePrincipal
-    ${function:Get-AgentType}       = $using:fnGetAgentType
-    ${function:Get-AgentManifest}   = $using:fnGetManifest
-    ${function:Get-Capability}      = $using:fnGetCapability
-    ${function:Join-Values}         = $using:fnJoinValues
-    ${function:Build-AgentValues}   = $using:fnBuildValues
-    $script:GraphBase      = $using:graphBase
-    $script:GraphHeaders   = $using:graphHeaders
-    $script:PrincipalCache = $using:principalCache
-
-    $pkg = $_
+function Get-AgentRecord {
+    param($Package)
     try {
-        $values = Build-AgentValues -Package $pkg
-        [pscustomobject]@{ Package = $pkg; Values = $values; Error = $null }
-    }
-    catch {
-        [pscustomobject]@{ Package = $pkg; Values = $null; Error = $_.Exception.Message }
+        $values = Build-AgentValues -Package $Package
+        [pscustomobject]@{ Package = $Package; Values = $values; Error = $null; Transient = $false }
+    } catch {
+        $status = $null
+        try { $status = [int]$_.Exception.Response.StatusCode } catch { }
+        [pscustomobject]@{
+            Package = $Package; Values = $null; Error = $_.Exception.Message
+            Transient = ($null -eq $status -or $status -in 0, 408, 429, 500, 502, 503, 504)
+        }
     }
 }
+$fnGetRecord = ${function:Get-AgentRecord}.ToString()
 
-# ---------------------------------------------------------------------------
-# Phase 2 - upsert into SharePoint (sequential, single PnP connection)
-# ---------------------------------------------------------------------------
+for ($offset = 0; $offset -lt $customAgents.Count; $offset += $BatchSize) {
+    $batch = @($customAgents | Select-Object -Skip $offset -First $BatchSize)
+    $stopAfterBatch = $false
+    Write-Host ("Batch {0}/{1}: fetching {2} agent(s)..." -f (1 + [int]($offset / $BatchSize)), [math]::Ceiling($customAgents.Count / $BatchSize), $batch.Count) -ForegroundColor Cyan
+    $graphToken = Get-PnPAccessToken -ResourceTypeName Graph
+    if ($graphToken -is [securestring]) { $graphToken = [System.Net.NetworkCredential]::new('', $graphToken).Password }
+    $script:GraphHeaders.Authorization = "Bearer $graphToken"
+    $graphHeaders = $script:GraphHeaders
+    $fetchTimer = [Diagnostics.Stopwatch]::StartNew()
 
-$created = 0; $updated = 0; $failed = 0
-
-foreach ($rec in $records) {
-    $pkg = $rec.Package
-    $id = "$($pkg.id)"
-    $displayName = "$($pkg.displayName)"
-
-    if ($rec.Error) {
-        $failed++
-        Write-Warning "Failed to fetch '$displayName' ($id): $($rec.Error)"
-        continue
-    }
-
-    try {
-        $itemValues = Convert-ToInternalNames -Values $rec.Values
-
-        if ($existingById.ContainsKey($id)) {
-            if ($PSCmdlet.ShouldProcess("$displayName ($id)", 'Update list item')) {
-                Set-PnPListItem -List $ListName -Identity $existingById[$id] -Values $itemValues | Out-Null
-                $updated++
-                Write-Host "  Updated: $displayName" -ForegroundColor DarkGray
-            }
+    if ($ThrottleLimit -eq 1) {
+        $recordList = [System.Collections.Generic.List[object]]::new()
+        $fetchFailures = 0
+        foreach ($package in $batch) {
+            Write-Host "  Fetching: $($package.displayName)"
+            $record = Get-AgentRecord -Package $package
+            $recordList.Add($record)
+            if ($record.Transient) { $fetchFailures++ } else { $fetchFailures = 0 }
+            if ($fetchFailures -ge $MaxConsecutiveFailures) { $stopAfterBatch = $true; break }
         }
-        else {
-            if ($PSCmdlet.ShouldProcess("$displayName ($id)", 'Create list item')) {
-                $newItem = Add-PnPListItem -List $ListName -Values $itemValues
-                $existingById[$id] = $newItem.Id
-                $created++
-                Write-Host "  Created: $displayName" -ForegroundColor DarkGray
+        $records = @($recordList.ToArray())
+    } else {
+        $records = @($batch | ForEach-Object -ThrottleLimit $ThrottleLimit -Parallel {
+            ${function:Invoke-WithRetry}    = $using:fnInvokeWithRetry
+            ${function:Invoke-GraphRequest} = $using:fnInvokeGraph
+            ${function:Resolve-Principal}   = $using:fnResolvePrincipal
+            ${function:Get-AgentType}       = $using:fnGetAgentType
+            ${function:Get-AgentDistribution} = $using:fnGetDistribution
+            ${function:Get-AgentManifest}   = $using:fnGetManifest
+            ${function:Get-Capability}      = $using:fnGetCapability
+            ${function:Join-Values}         = $using:fnJoinValues
+            ${function:Build-AgentValues}   = $using:fnBuildValues
+            ${function:Get-AgentRecord}     = $using:fnGetRecord
+            $script:GraphBase      = $using:graphBase
+            $script:GraphHeaders   = $using:graphHeaders
+            $script:PrincipalCache = $using:principalCache
+            $script:RequestTimeoutSeconds = $using:requestTimeout
+
+            Get-AgentRecord -Package $_
+        })
+    }
+    $fetchTimer.Stop()
+    $writeTimer = [Diagnostics.Stopwatch]::StartNew()
+
+    foreach ($rec in $records) {
+        $pkg = $rec.Package
+        $id = "$($pkg.id)"
+        $displayName = "$($pkg.displayName)"
+
+        if ($rec.Error) {
+            $failed++
+            if ($rec.Transient) { $consecutiveFailures++ } else { $consecutiveFailures = 0 }
+            if ($consecutiveFailures -ge $MaxConsecutiveFailures) { $stopAfterBatch = $true }
+            Write-Warning "Failed to fetch '$displayName' ($id): $($rec.Error)"
+            continue
+        }
+        $wroteItem = $false
+        try {
+            $itemValues = Convert-ToInternalNames -Values $rec.Values
+
+            if ($existingById.ContainsKey($id)) {
+                if ($PSCmdlet.ShouldProcess("$displayName ($id)", 'Update list item')) {
+                    Set-PnPListItem -List $ListName -Identity $existingById[$id] -Values $itemValues -ErrorAction Stop | Out-Null
+                    $updated++
+                    $wroteItem = $true
+                    Write-Host "  Updated: $displayName" -ForegroundColor DarkGray
+                }
             }
+            else {
+                if ($PSCmdlet.ShouldProcess("$displayName ($id)", 'Create list item')) {
+                    $newItem = Add-PnPListItem -List $ListName -Values $itemValues -ErrorAction Stop
+                    $existingById[$id] = $newItem.Id
+                    $created++
+                    $wroteItem = $true
+                    Write-Host "  Created: $displayName" -ForegroundColor DarkGray
+                }
+            }
+            $consecutiveFailures = 0
+        }
+        catch {
+            $failed++
+            $status = $null
+            try { $status = [int]$_.Exception.Response.StatusCode } catch { }
+            if ($null -eq $status -or $status -in 0, 408, 429, 500, 502, 503, 504) { $consecutiveFailures++ } else { $consecutiveFailures = 0 }
+            if ($consecutiveFailures -ge $MaxConsecutiveFailures) { $stopAfterBatch = $true }
+            Write-Warning "Failed to sync '$displayName' ($id): $($_.Exception.Message)"
+        }
+        if ($wroteItem) {
+            $script:CheckpointState.Completed[$id] = "modified:$($pkg.lastModifiedDateTime)"
+            Save-SyncCheckpoint
         }
     }
-    catch {
-        $failed++
-        Write-Warning "Failed to sync '$displayName' ($id): $($_.Exception.Message)"
+    $writeTimer.Stop()
+    Write-Host ("Batch saved. Created: {0}, Updated: {1}, Failed: {2}." -f $created, $updated, $failed) -ForegroundColor Cyan
+    Write-Host ("  Graph: {0:N1}s; SharePoint/checkpoint: {1:N1}s." -f $fetchTimer.Elapsed.TotalSeconds, $writeTimer.Elapsed.TotalSeconds) -ForegroundColor Cyan
+    if ($stopAfterBatch) {
+        Disconnect-PnPOnline
+        throw "Stopped after repeated connection failures. Successful writes are saved; rerun with -Resume -CheckpointPath '$script:CheckpointPath'."
     }
 }
 
@@ -457,3 +603,4 @@ Write-Host ''
 Write-Host ("Sync complete. Created: {0}, Updated: {1}, Failed: {2}." -f $created, $updated, $failed) -ForegroundColor Green
 
 Disconnect-PnPOnline
+if ($failed -gt 0) { throw "$failed agent(s) failed. Rerun with -Resume to retry unfinished agents." }
