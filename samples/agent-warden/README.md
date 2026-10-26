@@ -4,7 +4,11 @@
 
 **Agent Warden** is a declarative agent for Microsoft 365 Copilot that lets IT admins and governance teams **take action** on the custom Copilot agents in their tenant. It reads the agent inventory from a **SharePoint list** (the same `Agents` list populated by the [agent-sync-sharepoint](../agent-sync-sharepoint/) sample) and makes governance changes — **blocking** agents and **reassigning availability and deployment** — through the Package Management API.
 
-> **Agent Warden supersedes [Agent Steward](../agent-steward/).** Agent Steward queries the Package Management API directly, which cannot page through large catalogs reliably, so its inventory and analysis are capped on bigger tenants. Agent Warden reads from a **pre-synced SharePoint list** instead, so it scales to the full inventory with filtering — and additionally **takes action** (block, unblock, reassign). The trade-off: you must create and sync the list first, via the [agent-sync-sharepoint](../agent-sync-sharepoint/) flow or the [PowerShell scripts](../agent-sync-sharepoint-script/). For governance at scale, use Agent Warden.
+![Agent Warden in Microsoft 365 Copilot](agent-warden-screenshot.png)
+
+![Agent Warden showing agent details and usage availability](agent-warden-details-screenshot.png)
+
+![Agent Warden comparing agents with consolidation recommendations](agent-warden-consolidation-screenshot.png)
 
 ---
 
@@ -52,8 +56,9 @@ The `Agents` list is kept up to date by the [agent-sync-sharepoint](../agent-syn
 - A Microsoft 365 tenant with [Microsoft 365 Copilot licences](https://learn.microsoft.com/microsoft-365-copilot/extensibility/prerequisites#prerequisites)
 - Access to the Package Management API — requires a Microsoft Agent 365 license
 - The **`Agents` SharePoint list** populated by the [agent-sync-sharepoint](../agent-sync-sharepoint/) sample
-- Access to the native Microsoft **Insights Agent** in your tenant (the connected agent Agent Warden uses for usage data)
-- Users of the agent must hold the **Global Administrator** or **AI Administrator** role — the Package Management **write** endpoints support **delegated authentication only**, so calls are made as the signed-in user
+- Each user needs **Read** access to the inventory list for knowledge grounding, plus permission to **edit its list items** for action write-back (for example, **Contribute** on the list)
+- Each user must have access to and **install the native Microsoft Insights Agent in Microsoft 365 Copilot** before Agent Warden can call it for usage and adoption data. Installing Agent Warden alone does not satisfy this prerequisite
+- For governance actions, use an account with an active **[AI Administrator](https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference#ai-administrator)** role (recommended instead of the broader **Global Administrator** role, which also supports administration). Activate the role first if assigned through Privileged Identity Management. The Package Management **write** endpoints support **delegated authentication only**, so calls are made as the signed-in user; OAuth consent alone does not grant the user an admin role
 
 > **Delegated only.** The [Update Copilot package](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/api/admin-settings/package/copilotpackagedetail-update) endpoint is available with the delegated `CopilotPackages.ReadWrite.All` permission only (application permissions are not available). Agent Warden therefore acts as the signed-in admin.
 
@@ -71,6 +76,8 @@ cd copilot-agent-inventory-samples/samples/agent-warden
 ### 2. Point the agent at the Agents list
 
 Agent Warden reads inventory from the `Agents` SharePoint list as a knowledge source.
+
+> **The current user must have list access.** SharePoint knowledge grounding respects the signed-in user's existing SharePoint permissions; adding the list URL to the agent does not grant access or expose items the user cannot read. This built-in knowledge access is separate from the API plugin's OAuth registration and does not use its `Sites.Selected` scope. Write-back through the plugin uses **delegated** Graph permissions and requires both the user's permission to edit the relevant list items and the app's explicit **Write** grant on the site when using `Sites.Selected` (see step 3 below). Neither an AI Administrator/Global Administrator role nor the app's site grant automatically gives the user access to list content. Before using Agent Warden, verify that the intended user can open the list and edit an item directly in SharePoint.
 
 1. Make sure the [agent-sync-sharepoint](../agent-sync-sharepoint/) sample has been run so the `Agents` list is populated.
 2. Open **env/env.dev.user** (gitignored) and set `SHAREPOINT_AGENTS_LIST_URL` to the list URL:
@@ -92,13 +99,16 @@ Agent Warden reads inventory from the `Agents` SharePoint list as a knowledge so
    - List id — `GET https://graph.microsoft.com/v1.0/sites/<site-id>/lists?$filter=displayName eq 'Agents'` → `value[0].id`
 4. Index the **Agent Id** column so write-back lookups (`$filter`) work: in the list, open **Agent Id** column settings and ensure it is indexed (List settings > Indexed columns), or the sample script/PnP `Set-PnPField -List Agents -Identity AgentId -Values @{ Indexed = $true }`.
 
-> **Usage data via the connected Insights Agent.** Agent Warden is configured with the native Microsoft **Insights Agent** as a connected agent (declared in the `worker_agents` array of [appPackage/declarativeAgent.json](appPackage/declarativeAgent.json)) to source usage and adoption figures. No extra configuration is required — users of Agent Warden need access to the Insights Agent in their tenant for usage-based analysis. Without it, inventory, blocking, and reassignment still work; usage-informed severity just won't be available.
+> **Install the Insights Agent before using usage-based analysis.** Agent Warden is configured with the native Microsoft **Insights Agent** as a connected agent (declared in the `worker_agents` array of [appPackage/declarativeAgent.json](appPackage/declarativeAgent.json)) to source usage and adoption figures. **Each user must install Insights Agent in Microsoft 365 Copilot before Agent Warden can call it**; tenant access and installing Agent Warden are not enough. If Insights Agent is unavailable, contact your tenant administrator to enable access. No additional connected-agent configuration is required in this sample. Without Insights Agent installed and accessible, inventory, blocking, and reassignment still work, but usage-based analysis is unavailable.
 
 ### 3. Configure OAuth for the API plugin
 
 The API plugin calls the Package Management **write** endpoint and Microsoft Graph directory lookups using OAuth via the `OAuthPluginVault` auth type. Register an OAuth configuration in the Teams Developer Portal and store the resulting registration ID in your local env file.
 
+> **All permissions below must be Delegated permissions, not Application permissions.** This pro-code declarative agent uses delegated OAuth for its API plugin: users sign in, and Graph calls run on behalf of the signed-in admin, subject to their roles and permissions. The client secret identifies the OAuth client; it does **not** make this an app-only/client-credentials flow. The separate PowerShell inventory sync scripts use app-only authentication and have their own permission requirements; do not copy that configuration for Agent Warden.
+
 1. Register (or reuse) an application in [Entra ID](https://entra.microsoft.com) and add the following **delegated** Microsoft Graph permissions, then grant admin consent:
+   In **API permissions > Add a permission > Microsoft Graph**, select **Delegated permissions** for every permission listed here, including directory lookups and SharePoint write-back.
    - `CopilotPackages.ReadWrite.All` — block and reassign agents
    - `Sites.Selected` — write action outcomes back to the Agents list, scoped to only the granted site (least privilege). Alternatively `Sites.ReadWrite.All` allows writing to any site the signed-in admin can access.
    - `User.Read.All`, `Group.Read.All`, `Directory.Read.All` — resolve users and groups
@@ -170,7 +180,6 @@ Agent Warden makes changes to live agents, so its instructions enforce a confirm
 - [Declarative agents for Microsoft 365](https://aka.ms/teams-toolkit-declarative-agent)
 - [Extend Microsoft 365 Copilot with API plugins](https://learn.microsoft.com/microsoft-365-copilot/extensibility/overview-api-plugin)
 - [agent-sync-sharepoint sample](../agent-sync-sharepoint/) — populates the `Agents` list
-- [agent-steward sample](../agent-steward/) — read-only discovery and analysis
 
 ---
 

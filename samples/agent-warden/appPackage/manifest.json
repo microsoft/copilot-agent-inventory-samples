@@ -19,7 +19,7 @@
     },
     "description": {
         "short": "Govern and take action on your Copilot agents.",
-        "full": "Agent Warden reads your Copilot agent inventory from a SharePoint list and takes governance actions — blocking agents and reassigning their availability and deployment — via the Microsoft Graph Package Management API."
+        "full": "Agent Warden reads your Copilot agent inventory from a SharePoint list and takes governance actions - blocking agents and reassigning their availability and deployment - via the Microsoft Graph Package Management API."
     },
     "accentColor": "#FFFFFF",
     "copilotAgents": {

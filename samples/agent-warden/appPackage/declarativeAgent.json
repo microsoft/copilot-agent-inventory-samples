@@ -43,11 +43,11 @@
     },
     {
       "title": "🧬 Find duplicate agents",
-      "text": "Identify common themes and potential duplicate agents in the inventory so I can decide what to block or consolidate."
+      "text": "Identify common themes and potential duplicate agents in the inventory. Compare their usage over the last 30 days, including unique users, messages sent, and last activity, to recommend which to retain, block, or consolidate. Clearly flag unavailable usage data."
     },
     {
       "title": "🔀 Consolidation candidates",
-      "text": "Which agents serve the same purpose and could be consolidated, and what action would you recommend for each?"
+      "text": "Which agents serve the same purpose and could be consolidated? Analyse their usage over the last 30 days, including unique users, messages sent, and last activity, and use that evidence to recommend an action for each. Clearly flag unavailable usage data."
     },
     {
       "title": "📊 Broadly scoped agents",
