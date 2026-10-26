@@ -1,8 +1,8 @@
-# Agent Steward
+# Agent Steward (Deprecated)
 
 > **This is a sample.** Agent Steward is designed to showcase the art of the possible with the [Microsoft Graph Package Management (Inventory API)](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/api/admin-settings/package/resources/copilotpackagedetail). It is intended as a starting point and reference implementation, not a production-ready governance tool.
 
-> **Consider [Agent Warden](../agent-warden/) for governance at scale.** Agent Steward calls the Package Management API directly — the simplest setup (no list required) — but it cannot page through large catalogs, so its inventory and analysis are capped on bigger tenants. [Agent Warden](../agent-warden/) supersedes this sample: it reads from a pre-synced SharePoint list (so it scales to the full inventory) and can additionally **block, unblock, and reassign** agents. It does require the list to be created and synced first.
+> **Deprecated: use [Agent Warden](../agent-warden/) instead.** This sample's direct Package Management API calls do not follow paging, limiting the results returned for larger catalogs and making inventory analysis incomplete. Warden reads from a pre-synced SharePoint list and provides broader functionality: **duplicate consolidation recommendations**, **discovery of high-value LOB agent use cases**, usage insights through the native Insights Agent, and **blocking, unblocking, and reassignment**. The inventory list must be created and synced before using Warden.
 
 **Agent Steward** is a declarative agent for Microsoft 365 Copilot that helps IT admins and governance teams discover, analyse, and govern the Copilot agents deployed in their tenant. It connects to the Microsoft Graph Copilot Admin Catalog API to retrieve live package data, and cross-references that data with an uploaded usage report to surface actionable insights — with a particular focus on identifying duplicate agents and finding opportunities to consolidate fragmented deployments into org-wide agents.
 
