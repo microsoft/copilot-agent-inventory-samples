@@ -1,0 +1,77 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/copilot/declarative-agent/v1.8/schema.json",
+  "version": "v1.8",
+  "name": "Agent Warden",
+  "description": "Governs custom Copilot agents: reads inventory from a SharePoint list and takes action (block, reassign availability and deployment) via the Package Management API.",
+  "instructions": "$[file('instruction.txt')]",
+  "actions": [
+    {
+      "id": "WardenActions",
+      "file": "ai-plugin.json"
+    }
+  ],
+  "behavior_overrides": {
+    "suggestions": {
+      "disabled": true
+    },
+    "special_instructions": {
+      "discourage_model_knowledge": true
+    }
+  },
+  "capabilities": [
+    {
+      "name": "CodeInterpreter"
+    },
+    {
+      "name": "OneDriveAndSharePoint",
+      "items_by_url": [
+        {
+          "url": "${{SHAREPOINT_AGENTS_LIST_URL}}"
+        }
+      ]
+    }
+  ],
+  "worker_agents": [
+    {
+      "id": "P_23193c8d-0406-0253-ad63-c34c455b552d"
+    }
+  ],
+  "conversation_starters": [
+    {
+      "title": "🔎 Review the inventory",
+      "text": "Summarise the custom agents in the inventory list, grouped by agent type."
+    },
+    {
+      "title": "🧬 Find duplicate agents",
+      "text": "Identify common themes and potential duplicate agents in the inventory. Compare their usage over the last 30 days, including unique users, messages sent, and last activity, to recommend which to retain, block, or consolidate. Clearly flag unavailable usage data."
+    },
+    {
+      "title": "🔀 Consolidation candidates",
+      "text": "Which agents serve the same purpose and could be consolidated? Analyse their usage over the last 30 days, including unique users, messages sent, and last activity, and use that evidence to recommend an action for each. Clearly flag unavailable usage data."
+    },
+    {
+      "title": "📊 Broadly scoped agents",
+      "text": "Which agents are available or deployed to everyone in the tenant?"
+    },
+    {
+      "title": "🚫 Blocked agents",
+      "text": "Which agents are currently blocked, and which are not?"
+    },
+    {
+      "title": "🔒 Block an agent",
+      "text": "Block the <name> agent."
+    },
+    {
+      "title": "👥 Reassign availability",
+      "text": "Make the <name> agent available only to the <group name> group."
+    },
+    {
+      "title": "🌐 Deploy to everyone",
+      "text": "Deploy the <name> agent to all users in the tenant."
+    },
+    {
+      "title": "🧾 Agent details",
+      "text": "Show me the current availability and deployment for the <name> agent."
+    }
+  ]
+}

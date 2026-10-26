@@ -1,0 +1,477 @@
+openapi: 3.0.4
+info:
+  title: Copilot Agent Governance - Package Management (subset)
+  description: >-
+    A subset of the Microsoft Graph beta Package Management API plus directory
+    lookups, used by Agent Warden to inspect and change the state of individual
+    Copilot agents. The write operations support delegated permissions only and
+    run as the signed-in admin.
+  version: beta
+servers:
+  - url: https://graph.microsoft.com
+paths:
+  /beta/copilot/admin/catalog/packages/{id}:
+    get:
+      tags:
+        - copilot.copilotAdmin
+      summary: Get agent details
+      description: Retrieve the current details for a single agent, including its blocked state, availability, and deployment audience.
+      operationId: warden_GetAgentDetail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The Agent Id (from the Agent Id column of the inventory list).
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successfully retrieved the agent details.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  displayName:
+                    type: string
+                  isBlocked:
+                    type: boolean
+                  availableTo:
+                    type: string
+                  deployedTo:
+                    type: string
+                  allowedUsersAndGroups:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/packageAccessEntity"
+                  acquireUsersAndGroups:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/packageAccessEntity"
+        "404":
+          description: Agent not found.
+        default:
+          description: Unexpected error.
+    patch:
+      tags:
+        - copilot.copilotAdmin
+      summary: Reassign an agent's availability or deployment
+      description: >-
+        Update who a single agent is available to (allowedUsersAndGroups) and/or
+        deployed to (acquireUsersAndGroups). Each supplied collection fully
+        replaces the current value, and its scope enum must be sent with it:
+        availableTo is required when updating allowedUsersAndGroups, and
+        deployedTo is required when updating acquireUsersAndGroups. This does NOT
+        block an agent — use the block and unblock actions for that. Requires
+        delegated admin permissions. Returns 204 No Content on success.
+      operationId: warden_UpdatePackage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The Agent Id (from the Agent Id column of the inventory list).
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                availableTo:
+                  type: string
+                  description: >-
+                    Availability scope. REQUIRED when updating allowedUsersAndGroups.
+                    Use allowedForSome with a specific allowedUsersAndGroups list,
+                    allowedForAll for everyone, or allowedForNone for no one.
+                  enum:
+                    - allowedForAll
+                    - allowedForSome
+                    - allowedForNone
+                allowedUsersAndGroups:
+                  type: array
+                  description: The full set of users/groups the agent should be available to (used with availableTo = allowedForSome).
+                  items:
+                    $ref: "#/components/schemas/packageAccessEntity"
+                deployedTo:
+                  type: string
+                  description: >-
+                    Deployment scope. REQUIRED when updating acquireUsersAndGroups.
+                    Use acquiredForSome with a specific acquireUsersAndGroups list,
+                    acquiredForAll for everyone, or acquiredForNone for no one.
+                  enum:
+                    - acquiredForAll
+                    - acquiredForSome
+                    - acquiredForNone
+                acquireUsersAndGroups:
+                  type: array
+                  description: The full set of users/groups the agent should be deployed to (used with deployedTo = acquiredForSome).
+                  items:
+                    $ref: "#/components/schemas/packageAccessEntity"
+      responses:
+        "204":
+          description: The agent was updated successfully.
+        "400":
+          description: Invalid request body.
+        "403":
+          description: The signed-in user lacks the required admin permissions.
+        "404":
+          description: Agent not found.
+        default:
+          description: Unexpected error.
+  /beta/copilot/admin/catalog/packages/{id}/block:
+    post:
+      tags:
+        - copilot.copilotAdmin
+      summary: Block an agent
+      description: >-
+        Block a single agent to prevent its usage across the organization. Send
+        no request body. Requires delegated admin permissions. Returns 204 No
+        Content on success.
+      operationId: warden_BlockAgent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The Agent Id (from the Agent Id column of the inventory list).
+          schema:
+            type: string
+      responses:
+        "204":
+          description: The agent was blocked successfully.
+        "403":
+          description: The signed-in user lacks the required admin permissions.
+        "404":
+          description: Agent not found.
+        default:
+          description: Unexpected error.
+  /beta/copilot/admin/catalog/packages/{id}/unblock:
+    post:
+      tags:
+        - copilot.copilotAdmin
+      summary: Unblock an agent
+      description: >-
+        Unblock a single agent to allow its usage again. Send no request body.
+        Requires delegated admin permissions. Returns 204 No Content on success.
+      operationId: warden_UnblockAgent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The Agent Id (from the Agent Id column of the inventory list).
+          schema:
+            type: string
+      responses:
+        "204":
+          description: The agent was unblocked successfully.
+        "403":
+          description: The signed-in user lacks the required admin permissions.
+        "404":
+          description: Agent not found.
+        default:
+          description: Unexpected error.
+  /beta/copilot/admin/catalog/packages/{id}/reassign:
+    post:
+      tags:
+        - copilot.copilotAdmin
+      summary: Reassign an agent's owner
+      description: >-
+        Reassign ownership of a single agent to a different user. Requires
+        delegated admin permissions. Returns 204 No Content on success.
+      operationId: warden_ReassignOwner
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The Agent Id (from the Agent Id column of the inventory list).
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: string
+                  description: The user id of the new owner.
+      responses:
+        "204":
+          description: Ownership was reassigned successfully.
+        "400":
+          description: Invalid request body.
+        "403":
+          description: The signed-in user lacks the required admin permissions.
+        "404":
+          description: Agent not found.
+        default:
+          description: Unexpected error.
+  /beta/users:
+    get:
+      tags:
+        - directory
+      summary: Search users
+      description: Find users by display name or user principal name to resolve them to a directory id.
+      operationId: warden_SearchUsers
+      parameters:
+        - name: $filter
+          in: query
+          required: false
+          description: "OData filter, e.g. startswith(displayName,'Jane') or startswith(userPrincipalName,'jane')."
+          schema:
+            type: string
+        - name: $select
+          in: query
+          required: false
+          description: Comma-separated properties to return, e.g. id,displayName,userPrincipalName.
+          schema:
+            type: string
+        - name: $top
+          in: query
+          required: false
+          description: Maximum number of results to return.
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Matching users.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  value:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        displayName:
+                          type: string
+                        userPrincipalName:
+                          type: string
+        default:
+          description: Unexpected error.
+  /beta/groups:
+    get:
+      tags:
+        - directory
+      summary: Search groups
+      description: Find groups by display name to resolve them to a directory id.
+      operationId: warden_SearchGroups
+      parameters:
+        - name: $filter
+          in: query
+          required: false
+          description: "OData filter, e.g. startswith(displayName,'Finance')."
+          schema:
+            type: string
+        - name: $select
+          in: query
+          required: false
+          description: Comma-separated properties to return, e.g. id,displayName,mail.
+          schema:
+            type: string
+        - name: $top
+          in: query
+          required: false
+          description: Maximum number of results to return.
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Matching groups.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  value:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        displayName:
+                          type: string
+                        mail:
+                          type: string
+        default:
+          description: Unexpected error.
+  /beta/directoryObjects/getByIds:
+    post:
+      tags:
+        - directory
+      summary: Resolve directory objects by id
+      description: Resolve a set of directory object ids (users or groups) to their display names.
+      operationId: warden_ResolveDirectoryObjects
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                types:
+                  type: array
+                  description: Optional object types to resolve, e.g. user, group.
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: Resolved directory objects.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  value:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        displayName:
+                          type: string
+                        "@odata.type":
+                          type: string
+        default:
+          description: Unexpected error.
+  /beta/sites/${{SHAREPOINT_AGENTS_SITE_ID}}/lists/${{SHAREPOINT_AGENTS_LIST_ID}}/items:
+    get:
+      tags:
+        - inventory
+      summary: Find the inventory list row for an agent
+      description: >-
+        Find the row in the Agents SharePoint list for a given Agent Id, so its
+        SharePoint item id can be used to write the outcome of an action back to
+        the list. The site and list are preconfigured in the path; just pass
+        $expand=fields and a $filter on the indexed AgentId column.
+      operationId: warden_FindAgentListItem
+      parameters:
+        - name: $expand
+          in: query
+          required: false
+          description: Use "fields" to include the row's column values.
+          schema:
+            type: string
+        - name: $filter
+          in: query
+          required: false
+          description: "Filter on the indexed AgentId column, e.g. fields/AgentId eq 'T_...'."
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Matching list rows.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  value:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        fields:
+                          type: object
+                          properties:
+                            AgentId:
+                              type: string
+                            Title:
+                              type: string
+                            Blocked:
+                              type: boolean
+                            AvailableTo:
+                              type: string
+                            DeployedTo:
+                              type: string
+        default:
+          description: Unexpected error.
+  /beta/sites/${{SHAREPOINT_AGENTS_SITE_ID}}/lists/${{SHAREPOINT_AGENTS_LIST_ID}}/items/{itemId}/fields:
+    patch:
+      tags:
+        - inventory
+      summary: Update an agent's inventory list row
+      description: >-
+        Update the columns of an agent's row in the Agents SharePoint list to
+        reflect an action just taken via the Package Management API. Set Blocked
+        after a block/unblock; set AvailableTo and/or DeployedTo after a
+        reassignment. The site and list are preconfigured in the path. Requires
+        delegated Sites.Selected (Write) or Sites.ReadWrite.All.
+      operationId: warden_UpdateAgentListItem
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          description: The SharePoint item id from warden_FindAgentListItem.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                Blocked:
+                  type: boolean
+                  description: The agent's new blocked state.
+                AvailableTo:
+                  type: string
+                  description: The new availability scope (e.g. all, some, none).
+                DeployedTo:
+                  type: string
+                  description: The new deployment scope (e.g. all, some, none).
+      responses:
+        "200":
+          description: The row was updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  AgentId:
+                    type: string
+                  Blocked:
+                    type: boolean
+                  AvailableTo:
+                    type: string
+                  DeployedTo:
+                    type: string
+        "403":
+          description: The signed-in user lacks Sites.ReadWrite.All.
+        "404":
+          description: List item not found.
+        default:
+          description: Unexpected error.
+components:
+  schemas:
+    packageAccessEntity:
+      type: object
+      properties:
+        resourceType:
+          type: string
+          enum:
+            - user
+            - group
+        resourceId:
+          type: string

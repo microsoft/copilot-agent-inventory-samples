@@ -2,6 +2,10 @@ samples/agent-steward/env/.env.dev
 samples/agent-steward/.claude/settings.local.json
 samples/agent-steward/env/.env.dev.user
 
+# Agent Warden local user env (secrets) and build output
+samples/agent-warden/env/.env.dev.user
+samples/agent-warden/appPackage/build/
+
 # Certificates and private keys (never commit)
 *.pfx
 *.cer
