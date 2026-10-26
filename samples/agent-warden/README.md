@@ -2,7 +2,9 @@
 
 > **This is a sample.** Agent Warden demonstrates the art of the possible with the [Microsoft Graph Package Management API](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/api/admin-settings/package/overview) write operations. It is a reference implementation and starting point, not a production-ready governance tool.
 
-**Agent Warden** is a declarative agent for Microsoft 365 Copilot that lets IT admins and governance teams **take action** on the custom Copilot agents in their tenant. It reads the agent inventory from a **SharePoint list** (the same `Agents` list populated by the [agent-sync-sharepoint](https://github.com/microsoft/copilot-agent-inventory-samples/tree/main/samples/agent-sync-sharepoint) sample) and makes governance changes — **blocking** agents and **reassigning availability and deployment** — through the Package Management API.
+**Agent Warden** is a declarative agent for Microsoft 365 Copilot that helps IT admins and governance teams **identify duplicate agents for consolidation**, **discover high-value use cases for line-of-business (LOB) agents**, and **take governance action** across their tenant. Using inventory details and usage evidence where available, it recommends which overlapping agents to retain or retire and highlights promising employee-created use cases that could be developed into governed, organisation-wide LOB agents.
+
+It reads the agent inventory from a **SharePoint list** (the same `Agents` list populated by the [agent-sync-sharepoint](https://github.com/microsoft/copilot-agent-inventory-samples/tree/main/samples/agent-sync-sharepoint) sample) and makes governance changes — **blocking** agents and **reassigning availability and deployment** — through the Package Management API.
 
 ![Agent Warden in Microsoft 365 Copilot](agent-warden-screenshot.png)
 
