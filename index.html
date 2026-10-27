@@ -474,6 +474,11 @@
       box-shadow: 0 12px 40px rgba(0,0,0,.1), 0 0 0 1px rgba(124,58,237,.15);
       border-color: rgba(124,58,237,.2);
     }
+    .sample-card.deprecated {
+      background: var(--gray-100);
+      border-color: var(--gray-300);
+      filter: grayscale(1);
+    }
     .sample-card.soon { opacity: 0.82; }
     .sample-card.soon:hover { opacity: 1; }
 
@@ -484,6 +489,7 @@
     .sample-card.soon .card-top-bar {
       background: linear-gradient(90deg, #92400e, #d97706, #f59e0b);
     }
+    .sample-card.deprecated .card-top-bar { background: var(--gray-400); }
 
     .sample-card-inner { padding: 28px; display: flex; flex-direction: column; flex: 1; }
 
@@ -506,6 +512,13 @@
       border: 1px solid rgba(124,58,237,.14);
       box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
     }
+    .sample-icon-wrap img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: inherit;
+    }
     .sample-card.soon .sample-icon-wrap {
       background: linear-gradient(135deg, rgba(217,119,6,.08) 0%, rgba(245,158,11,.06) 100%);
       border-color: rgba(217,119,6,.15);
@@ -524,6 +537,7 @@
     }
     .badge-available { background: rgba(16,185,129,.1); color: #059669; border: 1px solid rgba(16,185,129,.2); }
     .badge-soon { background: rgba(245,158,11,.1); color: #b45309; border: 1px solid rgba(245,158,11,.2); }
+    .badge-deprecated { background: var(--gray-100); color: var(--gray-700); border: 1px solid var(--gray-300); }
     .badge-platform { background: rgba(59,130,246,.08); color: #1d4ed8; border: 1px solid rgba(59,130,246,.18); }
     .sample-title {
       font-size: 1.2rem;
@@ -995,7 +1009,7 @@
 <div class="stats-strip">
   <div class="stats-inner">
     <div class="stat-item">
-      <div class="stat-num">4</div>
+      <div class="stat-num">6</div>
       <div class="stat-label">Samples</div>
     </div>
     <div class="stat-item">
@@ -1048,18 +1062,82 @@
 
   <div class="sample-grid">
 
-    <!-- AGENT STEWARD -->
-    <article class="sample-card">
+    <article class="sample-card" id="agent-warden">
       <div class="card-top-bar"></div>
       <div class="sample-card-inner">
         <div class="sample-header">
-          <div class="sample-icon-wrap">🛡️</div>
+          <div class="sample-icon-wrap"><img src="https://raw.githubusercontent.com/microsoft/copilot-agent-inventory-samples/main/samples/agent-warden/appPackage/color.png" alt="Agent Warden icon" width="56" height="56" /></div>
           <div class="sample-title-block">
             <div class="sample-badges">
               <span class="badge badge-available">
                 <svg class="icon" width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/></svg>
                 Available
               </span>
+              <span class="badge badge-platform">M365 Copilot</span>
+              <span class="badge badge-platform">Declarative Agent</span>
+            </div>
+            <div class="sample-title">Agent Warden</div>
+          </div>
+        </div>
+
+        <p class="sample-desc">
+          Consolidate duplicate Copilot agents, discover high-value use cases for line-of-business (LOB) agents, and take governance action. Reads inventory from a pre-synced SharePoint list and uses the native Insights Agent for usage-informed recommendations when data is available. The recommended successor to Agent Steward; create and sync the inventory list first.
+        </p>
+
+        <div class="feature-list">
+          <div class="feature-label">What it does</div>
+          <div class="feature-items">
+            <div class="feature-item">
+              <div class="feature-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+              Recommend duplicate consolidation and promising LOB agent opportunities
+            </div>
+            <div class="feature-item">
+              <div class="feature-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+              Compare usage through the Insights Agent; flag unavailable metrics
+            </div>
+            <div class="feature-item">
+              <div class="feature-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+              Block, unblock, and reassign availability or deployment after confirmation
+            </div>
+            <div class="feature-item">
+              <div class="feature-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+              Write successful action outcomes back to the SharePoint inventory
+            </div>
+          </div>
+        </div>
+
+        <div class="prompts-wrap">
+          <div class="feature-label">Sample prompts</div>
+          <div class="prompt-chips">
+            <span class="prompt-chip">Compare duplicate agents and usage</span>
+            <span class="prompt-chip">Find LOB promotion candidates</span>
+            <span class="prompt-chip">Review broadly scoped agents</span>
+            <span class="prompt-chip">Block a redundant agent</span>
+          </div>
+        </div>
+
+        <div class="sample-footer">
+          <div class="sample-tech">
+            <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            M365 Agents Toolkit
+          </div>
+          <a href="https://github.com/microsoft/copilot-agent-inventory-samples/tree/main/samples/agent-warden" target="_blank" rel="noopener" class="sample-cta">
+            View sample
+            <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <!-- AGENT STEWARD -->
+    <article class="sample-card deprecated" id="agent-steward">
+      <div class="card-top-bar"></div>
+      <div class="sample-card-inner">
+        <div class="sample-header">
+          <div class="sample-icon-wrap"><img src="https://raw.githubusercontent.com/microsoft/copilot-agent-inventory-samples/main/samples/agent-steward/appPackage/color.png" alt="Agent Steward icon" width="56" height="56" /></div>
+          <div class="sample-title-block">
+            <div class="sample-badges">
+              <span class="badge badge-deprecated">Deprecated</span>
               <span class="badge badge-platform">M365 Copilot</span>
               <span class="badge badge-platform" style="background:rgba(99,102,241,.08);color:#4338ca;border-color:rgba(99,102,241,.18);">Declarative Agent</span>
             </div>
@@ -1068,7 +1146,7 @@
         </div>
 
         <p class="sample-desc">
-          A declarative agent for Microsoft 365 Copilot that helps IT admins discover, analyse, and govern Copilot agents across their tenant. Connects live to the Graph Package Management API and cross-references usage reports to surface duplicate agents, fragmented deployments, and org-wide consolidation opportunities.
+          Deprecated in favour of <a href="#agent-warden">Agent Warden</a>. Steward's direct Package Management API calls do not follow paging, limiting returned inventory and analysis on larger tenants. Warden adds list-based inventory, Insights Agent usage data, consolidation recommendations, and governance actions. The original sample remains linked for reference.
         </p>
 
         <div class="feature-list">
@@ -1076,7 +1154,7 @@
           <div class="feature-items">
             <div class="feature-item">
               <div class="feature-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-              List and classify all agents in the tenant catalog by build type
+              List and classify returned agents by build type, subject to paging limitations
             </div>
             <div class="feature-item">
               <div class="feature-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
@@ -1109,7 +1187,7 @@
             M365 Agents Toolkit
           </div>
           <a href="https://github.com/microsoft/copilot-agent-inventory-samples/tree/main/samples/agent-steward" target="_blank" rel="noopener" class="sample-cta">
-            View sample
+            View deprecated sample
             <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
         </div>
@@ -1439,8 +1517,11 @@
         <div>
           <div class="footer-col-title">Samples</div>
           <div class="footer-col-links">
+            <a href="https://github.com/microsoft/copilot-agent-inventory-samples/tree/main/samples/agent-warden" target="_blank" rel="noopener" class="footer-col-link">
+              <span>🛡️</span> Agent Warden
+            </a>
             <a href="https://github.com/microsoft/copilot-agent-inventory-samples/tree/main/samples/agent-steward" target="_blank" rel="noopener" class="footer-col-link">
-              <span>🛡️</span> Agent Steward
+              <span>🛡️</span> Agent Steward (deprecated)
             </a>
             <a href="https://github.com/microsoft/copilot-agent-inventory-samples/tree/main/samples/catalog-connector" target="_blank" rel="noopener" class="footer-col-link">
               <span>🔌</span> Catalog Connector
